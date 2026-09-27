@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "skybatuhan",
+  "version": "${version}",
+  "name": "SkyBatuhan",
+  "description": "A Skyblock mode that brings randomly generated features into the game.",
+  "authors": [
+    "Lightre", "Peregrints"
+  ],
+  "contact": {
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "ARR",
+  "icon": "assets/skybatuhan/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.lightre.skybatuhan.SkyBatuhan"
+    ],
+    "modmenu": [
+      "com.lightre.skybatuhan.config.SkyBatuhanModMenu"
+    ]
+  },
+  "mixins": [
+    "skybatuhan.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=25",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": ">=${modmenu_version}",
+    "yet_another_config_lib_v3": "*"
+  }
+}
