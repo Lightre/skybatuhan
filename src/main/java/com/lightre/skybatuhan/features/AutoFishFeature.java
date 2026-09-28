@@ -143,7 +143,6 @@ public class AutoFishFeature extends Feature {
             lastHookTime = System.currentTimeMillis();
             lastSkyblockClickTime = 0;
         }
-        ConfigManager.save();
     }
 
     private void playSafetyAlarm(Minecraft client) {
