@@ -11,6 +11,7 @@
 👨‍🦲 A multi-functional, unofficial Minecraft **Fabric** mod for **Hypixel SkyBlock**.
 
 ![Minecraft Version][minecraft_version_img]
+
 [![Releases][releases_img]][releases_url]
 [![License][license_img]][license_url]
 
