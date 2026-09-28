@@ -3,6 +3,7 @@ package com.lightre.skybatuhan.features;
 import com.lightre.skybatuhan.base.Feature;
 import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.manager.PointConfigManager;
+import com.lightre.skybatuhan.base.ModConfig;
 import com.lightre.skybatuhan.util.FarmPoint;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvents;
@@ -40,6 +41,12 @@ public class AutoFarmFeature extends Feature {
     private void handleSafety(Minecraft client, Vec3 currentPos, long now) {
         var player = client.player;
         if (player == null) return;
+
+        if (!hasMovement(currentMovement())) {
+            lastMovementTime = now;
+            lastPos = currentPos;
+            return;
+        }
 
         if (currentPos.distanceTo(lastPos) > ConfigManager.config.safety.threshold) {
             lastMovementTime = now;
@@ -117,8 +124,21 @@ public class AutoFarmFeature extends Feature {
         client.player.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
     }
 
+    private ModConfig.MoveSettings currentMovement() {
+        return isReversed ? ConfigManager.config.farming.farmingMovements.secondMove : ConfigManager.config.farming.farmingMovements.firstMove;
+    }
+
+    private boolean hasMovement(ModConfig.MoveSettings m) {
+        return m.forward || m.left || m.back || m.right;
+    }
+
     private void applyMovement(Minecraft client) {
-        var movement = isReversed ? ConfigManager.config.farming.farmingMovements.secondMove : ConfigManager.config.farming.farmingMovements.firstMove;
+        var movement = currentMovement();
+
+        if (!hasMovement(movement)) {
+            if (keysHeld) resetMovement(client);
+            return;
+        }
 
         boolean anyMovementEnabled = movement.forward || movement.left || movement.back || movement.right;
 
