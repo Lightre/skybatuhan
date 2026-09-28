@@ -38,8 +38,6 @@ public class ModConfig {
     }
 
     public static class FishingCategory {
-        public boolean autoFishEnabled = false;
-
         public String fishMode = "Vanilla";
 
         public boolean reelJump = false;

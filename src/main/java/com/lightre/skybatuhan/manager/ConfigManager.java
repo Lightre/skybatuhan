@@ -34,6 +34,10 @@ public class ConfigManager {
 
             if (config.safety == null) config.safety = new ModConfig.SafetyCategory();
             if (config.farming == null) config.farming = new ModConfig.FarmingCategory();
+            if (config.fishing == null) config.fishing = new ModConfig.FishingCategory();
+
+            if (config.farming.general == null)
+                config.farming.general = new ModConfig.GeneralSettings();
 
             if (config.farming.farmingMovements == null)
                 config.farming.farmingMovements = new ModConfig.FarmingMovements();

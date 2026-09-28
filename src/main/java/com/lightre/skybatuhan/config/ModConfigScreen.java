@@ -41,7 +41,7 @@ public class ModConfigScreen {
                 .group(OptionGroup.createBuilder()
                         .name(Component.literal("Auto Farm Status"))
                         .option(booleanOption("Auto Farm Enabled",
-                                () -> ConfigManager.config.featureStates.getOrDefault("Auto Farm", false),
+                                () -> ModuleManager.getFarmFeature().isEnabled(),
                                 val -> ModuleManager.getFarmFeature().setState(Minecraft.getInstance(), val)))
                         .build())
                 .group(OptionGroup.createBuilder()
@@ -67,7 +67,7 @@ public class ModConfigScreen {
                 .group(OptionGroup.createBuilder()
                         .name(Component.literal("Auto Fish Status"))
                         .option(booleanOption("Auto Fish Enabled",
-                                () -> config.fishing.autoFishEnabled,
+                                () -> ModuleManager.getFishFeature().isEnabled(),
                                 val -> ModuleManager.getFishFeature().setState(Minecraft.getInstance(), val)))
                         .option(Option.<String>createBuilder()
                                 .name(Component.literal("Fishing Mode"))
