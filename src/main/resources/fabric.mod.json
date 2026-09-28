@@ -5,7 +5,8 @@
   "name": "SkyBatuhan",
   "description": "A Skyblock mode that brings randomly generated features into the game.",
   "authors": [
-    "Lightre", "Peregrints"
+    "Lightre",
+    "Peregrints"
   ],
   "contact": {
     "sources": "https://github.com/Lightre/skybatuhan",
