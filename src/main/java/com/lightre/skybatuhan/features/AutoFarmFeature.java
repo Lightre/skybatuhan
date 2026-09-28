@@ -37,6 +37,9 @@ public class AutoFarmFeature extends Feature {
     }
 
     private void handleSafety(Minecraft client, Vec3 currentPos, long now) {
+        var player = client.player;
+        if (player == null) return;
+
         if (currentPos.distanceTo(lastPos) > ConfigManager.config.safety.threshold) {
             lastMovementTime = now;
             lastPos = currentPos;
@@ -46,8 +49,7 @@ public class AutoFarmFeature extends Feature {
             if (!alarmTriggered) {
                 alarmTriggered = true;
                 playAlarm(client);
-                assert client.player != null;
-                client.player.sendSystemMessage(Component.literal("§c§l[WARNING] §fSystem stopped! Stuck was detected."));
+                player.sendSystemMessage(Component.literal("§c§l[WARNING] §fSystem stopped! Stuck was detected."));
                 this.toggle(client);
                 resetMovement(client);
             }
@@ -55,6 +57,9 @@ public class AutoFarmFeature extends Feature {
     }
 
     private void checkPoints(Minecraft client, Vec3 currentPos) {
+        var player = client.player;
+        if (player == null) return;
+
         var data = PointConfigManager.data;
         boolean nearTurn = false;
 
@@ -64,8 +69,7 @@ public class AutoFarmFeature extends Feature {
                 if (lastTriggeredPoint == null || !lastTriggeredPoint.equals(point)) {
                     isReversed = !isReversed;
                     lastTriggeredPoint = point;
-                    assert client.player != null;
-                    client.player.playSound(SoundEvents.NOTE_BLOCK_HAT.value(), 1.0f, 1.0f);
+                    player.playSound(SoundEvents.NOTE_BLOCK_HAT.value(), 1.0f, 1.0f);
                 }
                 break;
             }
@@ -79,8 +83,7 @@ public class AutoFarmFeature extends Feature {
                     client.getConnection().sendCommand("home");
                 }
                 homeCommandDone = true;
-                assert client.player != null;
-                client.player.playSound(SoundEvents.NOTE_BLOCK_BELL.value(), 1.0f, 1.0f);
+                player.playSound(SoundEvents.NOTE_BLOCK_BELL.value(), 1.0f, 1.0f);
             }
         } else if (data.homePoint != null && data.homePoint.distanceTo(currentPos) >= ConfigManager.config.farming.general.pointRange) {
             homeCommandDone = false;
