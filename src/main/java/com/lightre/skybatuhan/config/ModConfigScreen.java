@@ -76,7 +76,11 @@ public class ModConfigScreen {
                                         .values(java.util.List.of("Vanilla", "Skyblock"))
                                         .valueFormatter(Component::literal))
                                 .build())
+                        .option(booleanOption("Jump On Reel",
+                                () -> config.fishing.reelJump,
+                                val -> config.fishing.reelJump = val))
                         .build())
+
                 .group(OptionGroup.createBuilder()
                         .name(Component.literal("Safety & AFK Settings"))
                         .option(doubleOption("AFK Timeout (Seconds)", () -> config.fishing.afkTimeoutSeconds, val -> config.fishing.afkTimeoutSeconds = val, 5.0, 180.0, 1.0))
