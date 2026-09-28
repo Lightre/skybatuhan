@@ -21,8 +21,8 @@ public class AutoFishFeature extends Feature {
     private static final ScheduledExecutorService threadScheduler = Executors.newScheduledThreadPool(1);
 
     private long lastHookTime = 0;
-
     private long lastSkyblockClickTime = 0;
+    private int jumpTicksLeft = 0;
 
     public AutoFishFeature() {
         super("Auto Fish");
@@ -64,7 +64,9 @@ public class AutoFishFeature extends Feature {
                         fishingHand = InteractionHand.OFF_HAND;
                     }
 
-                    player.input.makeJump();
+                    if (ConfigManager.config.fishing.reelJump) {
+                        startJump(client);
+                    }
                     gameMode.useItem(player, fishingHand);
                     player.swing(fishingHand);
                     System.out.println("[AutoFish] Organic Reel-in action executed successfully.");
@@ -101,6 +103,8 @@ public class AutoFishFeature extends Feature {
     public void onTick(Minecraft client) {
         if (client.player == null || client.level == null || !this.isEnabled()) return;
 
+        tickJump(client);
+
         String currentMode = ConfigManager.config.fishing.fishMode;
 
         // ================= SKYBLOCK MODE =================
@@ -129,7 +133,6 @@ public class AutoFishFeature extends Feature {
         long timeoutMs = (long) (ConfigManager.config.fishing.afkTimeoutSeconds * 1000);
 
         if (lastHookTime > 0 && (System.currentTimeMillis() - lastHookTime > timeoutMs)) {
-
             client.player.sendSystemMessage(Component.literal("§c§l[WARNING] §fSystem stopped! AFK/Lag safety timeout triggered."));
 
             playSafetyAlarm(client);
@@ -143,6 +146,25 @@ public class AutoFishFeature extends Feature {
             lastHookTime = System.currentTimeMillis();
             lastSkyblockClickTime = 0;
         }
+        releaseJump(client);
+    }
+
+    private void startJump(Minecraft client) {
+        client.options.keyJump.setDown(true);
+        jumpTicksLeft = 2;
+    }
+
+    private void tickJump(Minecraft client) {
+        if (jumpTicksLeft > 0 && --jumpTicksLeft == 0) {
+            client.options.keyJump.setDown(false);
+        }
+    }
+
+    private void releaseJump(Minecraft client) {
+        if (jumpTicksLeft > 0) {
+            client.options.keyJump.setDown(false);
+        }
+        jumpTicksLeft = 0;
     }
 
     private void playSafetyAlarm(Minecraft client) {
