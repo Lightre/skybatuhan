@@ -1,11 +1,6 @@
 package com.lightre.skybatuhan.base;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class ModConfig {
-    public Map<String, Boolean> featureStates = new HashMap<>();
-
     public SafetyCategory safety = new SafetyCategory();
     public FarmingCategory farming = new FarmingCategory();
     public FishingCategory fishing = new FishingCategory();
