@@ -92,8 +92,8 @@ public class ModConfigScreen {
                         .build())
                 .group(OptionGroup.createBuilder()
                         .name(Component.literal("Recast Delay Settings (ms)"))
-                        .option(doubleOption("Min Cast Delay", () -> config.fishing.minCastDelay, val -> config.fishing.minCastDelay = val, 10, 2000, 10))
-                        .option(doubleOption("Max Cast Delay", () -> config.fishing.maxCastDelay, val -> config.fishing.maxCastDelay = val, 10, 2000, 10))
+                        .option(doubleOption("Min Cast Delay", () -> config.fishing.minCastDelay, val -> config.fishing.minCastDelay = val, ModConfig.FishingCategory.MIN_CAST_DELAY_MS, 2000, 10))
+                        .option(doubleOption("Max Cast Delay", () -> config.fishing.maxCastDelay, val -> config.fishing.maxCastDelay = val, ModConfig.FishingCategory.MIN_CAST_DELAY_MS, 2000, 10))
                         .build())
                 .build();
     }

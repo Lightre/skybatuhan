@@ -44,5 +44,7 @@ public class ModConfig {
         public double maxCastDelay = 1000.0;
 
         public double afkTimeoutSeconds = 30.0;
+
+        public static final long MIN_CAST_DELAY_MS = 400;
     }
 }

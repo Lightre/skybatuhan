@@ -36,8 +36,7 @@ public class ConfigManager {
             if (config.farming == null) config.farming = new ModConfig.FarmingCategory();
             if (config.fishing == null) config.fishing = new ModConfig.FishingCategory();
 
-            if (config.farming.general == null)
-                config.farming.general = new ModConfig.GeneralSettings();
+            if (config.farming.general == null) config.farming.general = new ModConfig.GeneralSettings();
 
             if (config.farming.farmingMovements == null)
                 config.farming.farmingMovements = new ModConfig.FarmingMovements();
@@ -47,6 +46,9 @@ public class ConfigManager {
 
             if (config.farming.farmingMovements.secondMove == null)
                 config.farming.farmingMovements.secondMove = new ModConfig.MoveSettings();
+
+            config.fishing.minCastDelay = Math.max(config.fishing.minCastDelay, ModConfig.FishingCategory.MIN_CAST_DELAY_MS);
+            config.fishing.maxCastDelay = Math.max(config.fishing.maxCastDelay, ModConfig.FishingCategory.MIN_CAST_DELAY_MS);
 
         } catch (Exception e) {
             System.err.println("[" + CONFIG_FILE.getName() + "] Ayarlar yuklenirken hata olustu! Varsayilanlar kullaniliyor.");

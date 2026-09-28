@@ -45,8 +45,8 @@ public class AutoFishFeature extends Feature {
 
         long actualMinReel = Math.min(minReel, maxReel);
         long actualMaxReel = Math.max(minReel, maxReel);
-        long actualMinCast = Math.min(minCast, maxCast);
-        long actualMaxCast = Math.max(minCast, maxCast);
+        long actualMinCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, Math.min(minCast, maxCast));
+        long actualMaxCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, Math.max(minCast, maxCast));
 
         long reelDelay = ThreadLocalRandom.current().nextLong(actualMinReel, actualMaxReel + 1);
         System.out.println("[AutoFish] Reel-in scheduled with menu delay: " + reelDelay + "ms");
@@ -84,9 +84,8 @@ public class AutoFishFeature extends Feature {
                     player.swing(fishingHand);
                     System.out.println("[AutoFish] Organic Reel-in action executed successfully.");
 
-                    long rawCastDelay = ThreadLocalRandom.current().nextLong(actualMinCast, actualMaxCast + 1);
-                    long castDelay = Math.max(400, rawCastDelay);
-                    System.out.println("[AutoFish] Recast scheduled with safety-adjusted delay: " + castDelay + "ms");
+                    long castDelay = ThreadLocalRandom.current().nextLong(actualMinCast, actualMaxCast + 1);
+                    System.out.println("[AutoFish] Recast scheduled with delay: " + castDelay + "ms");
 
                     final InteractionHand finalHand = fishingHand;
 
