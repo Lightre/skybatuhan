@@ -23,6 +23,7 @@ public class AutoFishFeature extends Feature {
     private long lastHookTime = 0;
     private long lastSkyblockClickTime = 0;
     private int jumpTicksLeft = 0;
+    private static final long JUMP_LEAD_MS = 100L;
 
     public AutoFishFeature() {
         super("Auto Fish");
@@ -50,6 +51,21 @@ public class AutoFishFeature extends Feature {
         long reelDelay = ThreadLocalRandom.current().nextLong(actualMinReel, actualMaxReel + 1);
         System.out.println("[AutoFish] Reel-in scheduled with menu delay: " + reelDelay + "ms");
 
+        long jumpOffset = Math.min(reelDelay, JUMP_LEAD_MS);
+        long jumpDelay = reelDelay - jumpOffset;
+
+        threadScheduler.schedule(() -> {
+            if (client.player != null && client.gameMode != null) {
+                client.execute(() -> {
+                    if (!this.isEnabled()) return;
+                    if (ConfigManager.config.fishing.reelJump) {
+                        startJump(client);
+                        System.out.println("[AutoFish] Pre-reel jump executed right before pulling!");
+                    }
+                });
+            }
+        }, jumpDelay, TimeUnit.MILLISECONDS);
+
         threadScheduler.schedule(() -> {
             if (client.player != null && client.gameMode != null) {
                 client.execute(() -> {
@@ -64,9 +80,6 @@ public class AutoFishFeature extends Feature {
                         fishingHand = InteractionHand.OFF_HAND;
                     }
 
-                    if (ConfigManager.config.fishing.reelJump) {
-                        startJump(client);
-                    }
                     gameMode.useItem(player, fishingHand);
                     player.swing(fishingHand);
                     System.out.println("[AutoFish] Organic Reel-in action executed successfully.");
