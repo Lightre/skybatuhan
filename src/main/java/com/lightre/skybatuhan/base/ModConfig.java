@@ -40,11 +40,11 @@ public class ModConfig {
         public double minReelDelay = 400.0;
         public double maxReelDelay = 1000.0;
 
-        public double minCastDelay = 400.0;
+        public double minCastDelay = 200.0;
         public double maxCastDelay = 1000.0;
 
         public double afkTimeoutSeconds = 30.0;
 
-        public static final long MIN_CAST_DELAY_MS = 400;
+        public static final long MIN_CAST_DELAY_MS = 200;
     }
 }
