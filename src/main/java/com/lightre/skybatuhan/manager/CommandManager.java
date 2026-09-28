@@ -6,7 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
+// import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import com.lightre.skybatuhan.SkyBatuhan;
 
@@ -46,17 +46,20 @@ public class CommandManager {
     }
 
     private static int clearFarm(CommandContext<FabricClientCommandSource> context) {
-        var farm = ModuleManager.getFarmFeature();
-        farm.clearAll(Minecraft.getInstance());
+        ModuleManager.getFarmFeature().clearAll();
         sendMessage(context, PREFIX + "§cAll farm points cleared!");
         return 1;
     }
 
     private static int undoFarm(CommandContext<FabricClientCommandSource> context) {
-        var farm = ModuleManager.getFarmFeature();
-        farm.undoLastPoint(Minecraft.getInstance());
-        sendMessage(context, PREFIX + "§eLast point undone.");
-        return 1;
+        boolean removed = ModuleManager.getFarmFeature().undoLastPoint();
+
+        if (removed) {
+            sendMessage(context, PREFIX + "§eLast point undone.");
+        } else {
+            sendMessage(context, PREFIX + "§7There are no points to undo.");
+        }
+        return removed ? 1 : 0;
     }
 
     private static int mainGui(CommandContext<FabricClientCommandSource> context) {

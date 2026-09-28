@@ -198,20 +198,17 @@ public class AutoFarmFeature extends Feature {
         }).start();
     }
 
-    public void undoLastPoint(Minecraft client) {
-        if (!PointConfigManager.data.waypoints.isEmpty()) {
-            PointConfigManager.data.waypoints.removeLast();
-            PointConfigManager.save();
-            if (client.player != null)
-                client.player.sendSystemMessage(Component.literal("§e[SkyBatuhan] Last turning point removed."));
-        }
+    public boolean undoLastPoint() {
+        if (PointConfigManager.data.waypoints.isEmpty()) return false;
+
+        PointConfigManager.data.waypoints.removeLast();
+        PointConfigManager.save();
+        return true;
     }
 
-    public void clearAll(Minecraft client) {
+    public void clearAll() {
         PointConfigManager.data.waypoints.clear();
         PointConfigManager.data.homePoint = null;
         PointConfigManager.save();
-        if (client.player != null)
-            client.player.sendSystemMessage(Component.literal("§c[SkyBatuhan] All turning points data removed."));
     }
 }
