@@ -58,16 +58,18 @@ public class AutoFishFeature extends Feature {
                 client.execute(() -> {
                     if (!this.isEnabled()) return;
 
+                    var player = client.player;
+                    var gameMode = client.gameMode;
+                    if (player == null || gameMode == null) return;
+
                     InteractionHand fishingHand = InteractionHand.MAIN_HAND;
-                    assert client.player != null;
-                    if (client.player.getOffhandItem().is(Items.FISHING_ROD)) {
+                    if (player.getOffhandItem().is(Items.FISHING_ROD)) {
                         fishingHand = InteractionHand.OFF_HAND;
                     }
 
-                    client.player.input.makeJump();
-                    assert client.gameMode != null;
-                    client.gameMode.useItem(client.player, fishingHand);
-                    client.player.swing(fishingHand);
+                    player.input.makeJump();
+                    gameMode.useItem(player, fishingHand);
+                    player.swing(fishingHand);
                     System.out.println("[AutoFish] Organic Reel-in action executed successfully.");
 
                     long rawCastDelay = ThreadLocalRandom.current().nextLong(actualMinCast, actualMaxCast + 1);
@@ -81,17 +83,18 @@ public class AutoFishFeature extends Feature {
                             client.execute(() -> {
                                 if (!this.isEnabled()) return;
 
-                                assert client.gameMode != null;
-                                client.gameMode.useItem(client.player, finalHand);
-                                assert client.player != null;
-                                client.player.swing(finalHand);
+                                var p2 = client.player;
+                                var gm2 = client.gameMode;
+                                if (p2 == null || gm2 == null) return;
+
+                                gm2.useItem(p2, finalHand);
+                                p2.swing(finalHand);
                                 System.out.println("[AutoFish] Organic Recast action executed successfully. Loop continues!");
 
                                 lastSkyblockClickTime = System.currentTimeMillis();
                             });
                         }
                     }, castDelay, TimeUnit.MILLISECONDS);
-
                 });
             }
         }, reelDelay, TimeUnit.MILLISECONDS);
