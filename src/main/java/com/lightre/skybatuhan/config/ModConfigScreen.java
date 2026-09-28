@@ -41,7 +41,7 @@ public class ModConfigScreen {
                 .group(OptionGroup.createBuilder()
                         .name(Component.literal("Auto Farm Status"))
                         .option(booleanOption("Auto Farm Enabled",
-                                () -> ConfigManager.config.featureStates.getOrDefault("Auto Farm", false),
+                                () -> ModuleManager.getFarmFeature().isEnabled(),
                                 val -> ModuleManager.getFarmFeature().setState(Minecraft.getInstance(), val)))
                         .build())
                 .group(OptionGroup.createBuilder()
