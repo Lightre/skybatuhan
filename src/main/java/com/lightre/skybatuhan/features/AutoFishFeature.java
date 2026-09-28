@@ -26,9 +26,6 @@ public class AutoFishFeature extends Feature {
 
     public AutoFishFeature() {
         super("Auto Fish");
-        if (ConfigManager.config != null) {
-            ConfigManager.config.featureStates.put(getName(), ConfigManager.config.fishing.autoFishEnabled);
-        }
     }
 
     public void onFishHooked(Minecraft client) {
@@ -146,10 +143,7 @@ public class AutoFishFeature extends Feature {
             lastHookTime = System.currentTimeMillis();
             lastSkyblockClickTime = 0;
         }
-        if (ConfigManager.config != null) {
-            ConfigManager.config.fishing.autoFishEnabled = state;
-            ConfigManager.save();
-        }
+        ConfigManager.save();
     }
 
     private void playSafetyAlarm(Minecraft client) {
