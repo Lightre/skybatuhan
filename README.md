@@ -1,4 +1,4 @@
-<div style="text-align: center;">
+<div align="center">
 
 <a href="https://github.com/Lightre/skybatuhan/" target="_blank">
   <img width="160px" alt="Mod Icon" src="https://github.com/Lightre/skybatuhan/blob/c74ecc9d064d5c97806f7bcb96a1b1e43d8dc21b/src/main/resources/assets/skybatuhan/icon.png?raw=true">
