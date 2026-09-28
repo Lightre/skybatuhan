@@ -8,7 +8,8 @@
     "Lightre", "Peregrints"
   ],
   "contact": {
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "sources": "https://github.com/Lightre/skybatuhan",
+    "issues": "https://github.com/Lightre/skybatuhan/issues"
   },
   "license": "ARR",
   "icon": "assets/skybatuhan/icon.png",
@@ -28,10 +29,10 @@
     "fabricloader": ">=${loader_version}",
     "minecraft": "~${minecraft_version}",
     "java": ">=25",
-    "fabric-api": "*"
+    "fabric-api": "*",
+    "yet_another_config_lib_v3": "*"
   },
   "suggests": {
-    "modmenu": ">=${modmenu_version}",
-    "yet_another_config_lib_v3": "*"
+    "modmenu": ">=${modmenu_version}"
   }
 }
