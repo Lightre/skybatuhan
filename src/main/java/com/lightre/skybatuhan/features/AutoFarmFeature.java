@@ -42,7 +42,7 @@ public class AutoFarmFeature extends Feature {
         var player = client.player;
         if (player == null) return;
 
-        if (!hasMovement(currentMovement())) {
+        if (hasNoMovement(currentMovement())) {
             lastMovementTime = now;
             lastPos = currentPos;
             return;
@@ -91,6 +91,7 @@ public class AutoFarmFeature extends Feature {
                     client.getConnection().sendCommand("home");
                 }
                 homeCommandDone = true;
+                isReversed = false;
                 player.playSound(SoundEvents.NOTE_BLOCK_BELL.value(), 1.0f, 1.0f);
             }
         } else if (data.homePoint != null && data.homePoint.distanceTo(currentPos) >= ConfigManager.config.farming.general.pointRange) {
@@ -128,14 +129,14 @@ public class AutoFarmFeature extends Feature {
         return isReversed ? ConfigManager.config.farming.farmingMovements.secondMove : ConfigManager.config.farming.farmingMovements.firstMove;
     }
 
-    private boolean hasMovement(ModConfig.MoveSettings m) {
-        return m.forward || m.left || m.back || m.right;
+    private boolean hasNoMovement(ModConfig.MoveSettings m) {
+        return !m.forward && !m.left && !m.back && !m.right;
     }
 
     private void applyMovement(Minecraft client) {
         var movement = currentMovement();
 
-        if (!hasMovement(movement)) {
+        if (hasNoMovement(movement)) {
             if (keysHeld) resetMovement(client);
             return;
         }
