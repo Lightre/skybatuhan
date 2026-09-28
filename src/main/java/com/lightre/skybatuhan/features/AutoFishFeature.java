@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AutoFishFeature extends Feature {
     private static final ScheduledExecutorService threadScheduler = Executors.newScheduledThreadPool(1);
@@ -24,6 +25,7 @@ public class AutoFishFeature extends Feature {
     private long lastSkyblockClickTime = 0;
     private int jumpTicksLeft = 0;
     private static final long JUMP_LEAD_MS = 100L;
+    private final AtomicInteger generation = new AtomicInteger();
 
     public AutoFishFeature() {
         super("Auto Fish");
@@ -31,6 +33,8 @@ public class AutoFishFeature extends Feature {
 
     public void onFishHooked(Minecraft client) {
         if (!this.isEnabled() || client.player == null || client.gameMode == null) return;
+
+        final int gen = generation.get();
 
         System.out.println("[Client-AntiCheat-Safe] Fish hooked for local player!");
 
@@ -45,8 +49,10 @@ public class AutoFishFeature extends Feature {
 
         long actualMinReel = Math.min(minReel, maxReel);
         long actualMaxReel = Math.max(minReel, maxReel);
-        long actualMinCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, Math.min(minCast, maxCast));
-        long actualMaxCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, Math.max(minCast, maxCast));
+        long lowCast = Math.min(minCast, maxCast);
+        long highCast = Math.max(minCast, maxCast);
+        long actualMinCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, lowCast);
+        long actualMaxCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, highCast);
 
         long reelDelay = ThreadLocalRandom.current().nextLong(actualMinReel, actualMaxReel + 1);
         System.out.println("[AutoFish] Reel-in scheduled with menu delay: " + reelDelay + "ms");
@@ -57,7 +63,7 @@ public class AutoFishFeature extends Feature {
         threadScheduler.schedule(() -> {
             if (client.player != null && client.gameMode != null) {
                 client.execute(() -> {
-                    if (!this.isEnabled()) return;
+                    if (!this.isEnabled() || gen != generation.get()) return;
                     if (ConfigManager.config.fishing.reelJump) {
                         startJump(client);
                         System.out.println("[AutoFish] Pre-reel jump executed right before pulling!");
@@ -69,7 +75,7 @@ public class AutoFishFeature extends Feature {
         threadScheduler.schedule(() -> {
             if (client.player != null && client.gameMode != null) {
                 client.execute(() -> {
-                    if (!this.isEnabled()) return;
+                    if (!this.isEnabled() || gen != generation.get()) return;
 
                     var player = client.player;
                     var gameMode = client.gameMode;
@@ -92,7 +98,7 @@ public class AutoFishFeature extends Feature {
                     threadScheduler.schedule(() -> {
                         if (client.player != null && client.gameMode != null) {
                             client.execute(() -> {
-                                if (!this.isEnabled()) return;
+                                if (!this.isEnabled() || gen != generation.get()) return;
 
                                 var p2 = client.player;
                                 var gm2 = client.gameMode;
@@ -154,6 +160,7 @@ public class AutoFishFeature extends Feature {
 
     @Override
     public void onToggle(Minecraft client, boolean state) {
+        generation.incrementAndGet();
         if (state) {
             lastHookTime = System.currentTimeMillis();
             lastSkyblockClickTime = 0;
