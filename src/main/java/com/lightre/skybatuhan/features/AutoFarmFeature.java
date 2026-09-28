@@ -15,6 +15,7 @@ public class AutoFarmFeature extends Feature {
     private Vec3 lastPos = Vec3.ZERO;
     private long lastMovementTime = 0;
     private long lastWaypointTime = 0;
+    private boolean keysHeld = false;
 
     public AutoFarmFeature() {
         super("Auto Farm");
@@ -122,6 +123,7 @@ public class AutoFarmFeature extends Feature {
         boolean anyMovementEnabled = movement.forward || movement.left || movement.back || movement.right;
 
         if (!anyMovementEnabled) {
+            if (keysHeld) resetMovement(client);
             return;
         }
 
@@ -131,6 +133,8 @@ public class AutoFarmFeature extends Feature {
         client.options.keyLeft.setDown(movement.left);
         client.options.keyDown.setDown(movement.back);
         client.options.keyRight.setDown(movement.right);
+
+        keysHeld = true;
     }
 
     private void resetMovement(Minecraft client) {
@@ -139,6 +143,7 @@ public class AutoFarmFeature extends Feature {
         client.options.keyLeft.setDown(false);
         client.options.keyDown.setDown(false);
         client.options.keyRight.setDown(false);
+        keysHeld = false;
     }
 
     @Override
