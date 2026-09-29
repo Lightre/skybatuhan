@@ -237,10 +237,11 @@ public class AutoFishFeature extends Feature {
 
     @Override
     public void onToggle(Minecraft client, boolean state) {
-        generation.incrementAndGet();
+        int gen = generation.incrementAndGet();
         if (state) {
             lastHookTime = System.currentTimeMillis();
             lastSkyblockClickTime = 0;
+            scheduleInitialCast(client, gen);
         }
         releaseJump(client);
 
@@ -249,6 +250,42 @@ public class AutoFishFeature extends Feature {
             client.player.getInventory().setSelectedSlot(pendingRestoreSlot);
         }
         pendingRestoreSlot = -1;
+    }
+
+    // ================= INITIAL CAST =================
+    private void scheduleInitialCast(Minecraft client, int gen) {
+        if (client.player == null) return;
+
+        InteractionHand rodHand = null;
+        if (client.player.getMainHandItem().is(Items.FISHING_ROD)) {
+            rodHand = InteractionHand.MAIN_HAND;
+        } else if (client.player.getOffhandItem().is(Items.FISHING_ROD)) {
+            rodHand = InteractionHand.OFF_HAND;
+        }
+
+        if (rodHand == null) {
+            client.player.sendSystemMessage(Component.literal("§c[AutoFish] §fHold a fishing rod to start."));
+            return;
+        }
+
+        // Bobber is already in the water: casting again would reel it in
+        if (client.player.fishing != null) return;
+
+        final InteractionHand castHand = rodHand;
+        long delay = ThreadLocalRandom.current().nextLong(150L, 400L);
+
+        threadScheduler.schedule(() -> client.execute(() -> {
+            if (!this.isEnabled() || gen != generation.get()) return;
+
+            var player = client.player;
+            var gameMode = client.gameMode;
+            if (player == null || gameMode == null) return;
+            if (player.fishing != null) return;
+
+            gameMode.useItem(player, castHand);
+            player.swing(castHand);
+            System.out.println("[AutoFish] Initial cast executed");
+        }), delay, TimeUnit.MILLISECONDS);
     }
 
     private void startJump(Minecraft client) {
