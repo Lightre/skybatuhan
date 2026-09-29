@@ -46,5 +46,10 @@ public class ModConfig {
         public double afkTimeoutSeconds = 30.0;
 
         public static final long MIN_CAST_DELAY_MS = 200;
+
+        public boolean useActionSlot = false;
+        public String actionSlot = "Slot 3";
     }
+
+
 }

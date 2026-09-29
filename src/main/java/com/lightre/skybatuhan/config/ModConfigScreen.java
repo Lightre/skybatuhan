@@ -1,5 +1,6 @@
 package com.lightre.skybatuhan.config;
 
+import dev.isxander.yacl3.api.controller.CyclingListControllerBuilder;
 import net.minecraft.client.Minecraft;
 import com.lightre.skybatuhan.base.ModConfig;
 import com.lightre.skybatuhan.manager.ConfigManager;
@@ -11,6 +12,7 @@ import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -113,6 +115,22 @@ public class ModConfigScreen {
                         .option(doubleOption("Max Cast Delay", DEFAULTS.fishing.maxCastDelay,
                                 () -> config.fishing.maxCastDelay,
                                 val -> config.fishing.maxCastDelay = val, ModConfig.FishingCategory.MIN_CAST_DELAY_MS, 2000, 10))
+                        .build())
+                .group(OptionGroup.createBuilder()
+                        .name(Component.literal("Action Slot Settings"))
+                        .option(booleanOption("Enable Action Slot",
+                                false,
+                                () -> config.fishing.useActionSlot,
+                                val -> config.fishing.useActionSlot = val))
+                        .option(Option.<String>createBuilder()
+                                .name(Component.literal("Select Action Slot"))
+                                .binding(config.fishing.actionSlot,
+                                        () -> config.fishing.actionSlot,
+                                        val -> config.fishing.actionSlot = val)
+                                .controller(opt -> CyclingListControllerBuilder.create(opt)
+                                        .values(List.of("Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6", "Slot 7", "Slot 8", "Slot 9"))
+                                        .valueFormatter(Component::literal))
+                                .build())
                         .build())
                 .build();
     }
