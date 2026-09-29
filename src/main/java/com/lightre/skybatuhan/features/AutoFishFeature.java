@@ -27,6 +27,12 @@ public class AutoFishFeature extends Feature {
     private static final long JUMP_LEAD_MS = 100L;
     private final AtomicInteger generation = new AtomicInteger();
 
+    // ACTION SLOT: eklenen sabitler ve alan
+    private static final long ACTION_SLOT_MIN_DELAY_MS = 25L;
+    private static final long ACTION_SLOT_MAX_DELAY_MS = 75L;
+    // Action slot sirasinda kapatilirsa eski slota donebilmek icin (-1 = yok)
+    private int pendingRestoreSlot = -1;
+
     public AutoFishFeature() {
         super("Auto Fish");
     }
@@ -90,31 +96,102 @@ public class AutoFishFeature extends Feature {
                     player.swing(fishingHand);
                     System.out.println("[AutoFish] Organic Reel-in action executed successfully.");
 
-                    long castDelay = ThreadLocalRandom.current().nextLong(actualMinCast, actualMaxCast + 1);
-                    System.out.println("[AutoFish] Recast scheduled with delay: " + castDelay + "ms");
-
                     final InteractionHand finalHand = fishingHand;
 
-                    threadScheduler.schedule(() -> {
-                        if (client.player != null && client.gameMode != null) {
-                            client.execute(() -> {
-                                if (!this.isEnabled() || gen != generation.get()) return;
-
-                                var p2 = client.player;
-                                var gm2 = client.gameMode;
-                                if (p2 == null || gm2 == null) return;
-
-                                gm2.useItem(p2, finalHand);
-                                p2.swing(finalHand);
-                                System.out.println("[AutoFish] Organic Recast action executed successfully. Loop continues!");
-
-                                lastSkyblockClickTime = System.currentTimeMillis();
-                            });
-                        }
-                    }, castDelay, TimeUnit.MILLISECONDS);
+                    // ACTION SLOT: olta cekildikten sonra, tekrar atmadan once
+                    if (shouldUseActionSlot()) {
+                        scheduleActionSlot(client, finalHand, gen, actualMinCast, actualMaxCast);
+                    } else {
+                        scheduleRecast(client, finalHand, gen, actualMinCast, actualMaxCast);
+                    }
                 });
             }
         }, reelDelay, TimeUnit.MILLISECONDS);
+    }
+
+    // Eski kodun recast blogu, ayri metoda alindi (davranis ayni)
+    private void scheduleRecast(Minecraft client, InteractionHand finalHand, int gen, long actualMinCast, long actualMaxCast) {
+        long castDelay = ThreadLocalRandom.current().nextLong(actualMinCast, actualMaxCast + 1);
+        System.out.println("[AutoFish] Recast scheduled with delay: " + castDelay + "ms");
+
+        threadScheduler.schedule(() -> {
+            if (client.player != null && client.gameMode != null) {
+                client.execute(() -> {
+                    if (!this.isEnabled() || gen != generation.get()) return;
+
+                    var p2 = client.player;
+                    var gm2 = client.gameMode;
+                    if (p2 == null || gm2 == null) return;
+
+                    gm2.useItem(p2, finalHand);
+                    p2.swing(finalHand);
+                    System.out.println("[AutoFish] Organic Recast action executed successfully. Loop continues!");
+
+                    lastSkyblockClickTime = System.currentTimeMillis();
+                });
+            }
+        }, castDelay, TimeUnit.MILLISECONDS);
+    }
+
+    // ================= ACTION SLOT =================
+    private boolean shouldUseActionSlot() {
+        return ConfigManager.config.fishing.useActionSlot && ConfigManager.config.fishing.actionSlot != null;
+    }
+
+    private int parseActionSlot() {
+        String digits = ConfigManager.config.fishing.actionSlot.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) return 0;
+        int slot = Integer.parseInt(digits) - 1;
+        return Math.max(0, Math.min(8, slot));
+    }
+
+    private void scheduleActionSlot(Minecraft client, InteractionHand finalHand, int gen, long actualMinCast, long actualMaxCast) {
+        int targetSlot = parseActionSlot();
+        long switchDelay = ThreadLocalRandom.current().nextLong(ACTION_SLOT_MIN_DELAY_MS, ACTION_SLOT_MAX_DELAY_MS + 1);
+
+        threadScheduler.schedule(() -> {
+            if (client.player != null && client.gameMode != null) {
+                client.execute(() -> executeActionSlot(client, finalHand, gen, targetSlot, actualMinCast, actualMaxCast));
+            }
+        }, switchDelay, TimeUnit.MILLISECONDS);
+    }
+
+    private void executeActionSlot(Minecraft client, InteractionHand finalHand, int gen, int targetSlot, long actualMinCast, long actualMaxCast) {
+        if (!this.isEnabled() || gen != generation.get()) return;
+
+        var player = client.player;
+        var gameMode = client.gameMode;
+        if (player == null || gameMode == null) return;
+
+        int originalSlot = player.getInventory().getSelectedSlot();
+        pendingRestoreSlot = originalSlot;
+        player.getInventory().setSelectedSlot(targetSlot);
+
+        gameMode.useItem(player, InteractionHand.MAIN_HAND);
+        player.swing(InteractionHand.MAIN_HAND);
+        System.out.println("[AutoFish] Action slot activated");
+
+        long returnDelay = ThreadLocalRandom.current().nextLong(ACTION_SLOT_MIN_DELAY_MS, ACTION_SLOT_MAX_DELAY_MS + 1);
+
+        threadScheduler.schedule(() -> {
+            if (client.player != null) {
+                client.execute(() -> returnToRodSlot(client, finalHand, gen, originalSlot, actualMinCast, actualMaxCast));
+            }
+        }, returnDelay, TimeUnit.MILLISECONDS);
+    }
+
+    private void returnToRodSlot(Minecraft client, InteractionHand finalHand, int gen, int originalSlot, long actualMinCast, long actualMaxCast) {
+        var player = client.player;
+        if (player == null) return;
+
+        // Slotu her durumda geri ver (kapatilmis olsa bile oyuncu yanlis slotta kalmasin)
+        player.getInventory().setSelectedSlot(originalSlot);
+        pendingRestoreSlot = -1;
+
+        if (!this.isEnabled() || gen != generation.get()) return;
+
+        System.out.println("[AutoFish] Returned to rod slot");
+        scheduleRecast(client, finalHand, gen, actualMinCast, actualMaxCast);
     }
 
     @Override
@@ -166,6 +243,12 @@ public class AutoFishFeature extends Feature {
             lastSkyblockClickTime = 0;
         }
         releaseJump(client);
+
+        // ACTION SLOT: action slot sirasinda kapatilirsa eski slota don
+        if (pendingRestoreSlot >= 0 && client.player != null) {
+            client.player.getInventory().setSelectedSlot(pendingRestoreSlot);
+        }
+        pendingRestoreSlot = -1;
     }
 
     private void startJump(Minecraft client) {
