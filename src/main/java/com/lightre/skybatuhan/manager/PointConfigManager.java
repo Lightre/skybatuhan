@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 public class PointConfigManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -25,6 +26,7 @@ public class PointConfigManager {
         try (FileReader reader = new FileReader(POINTS_FILE)) {
             data = GSON.fromJson(reader, FarmData.class);
             if (data == null) data = new FarmData();
+            if (data.waypoints == null) data.waypoints = new ArrayList<>();
         } catch (Exception e) {
             e.printStackTrace();
         }

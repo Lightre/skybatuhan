@@ -1,11 +1,6 @@
 package com.lightre.skybatuhan.base;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class ModConfig {
-    public Map<String, Boolean> featureStates = new HashMap<>();
-
     public SafetyCategory safety = new SafetyCategory();
     public FarmingCategory farming = new FarmingCategory();
     public FishingCategory fishing = new FishingCategory();
@@ -45,9 +40,11 @@ public class ModConfig {
         public double minReelDelay = 400.0;
         public double maxReelDelay = 1000.0;
 
-        public double minCastDelay = 400.0;
+        public double minCastDelay = 200.0;
         public double maxCastDelay = 1000.0;
 
         public double afkTimeoutSeconds = 30.0;
+
+        public static final long MIN_CAST_DELAY_MS = 200;
     }
 }

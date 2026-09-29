@@ -16,13 +16,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AutoFishFeature extends Feature {
     private static final ScheduledExecutorService threadScheduler = Executors.newScheduledThreadPool(1);
 
     private long lastHookTime = 0;
-
     private long lastSkyblockClickTime = 0;
+    private int jumpTicksLeft = 0;
+    private static final long JUMP_LEAD_MS = 100L;
+    private final AtomicInteger generation = new AtomicInteger();
 
     public AutoFishFeature() {
         super("Auto Fish");
@@ -30,6 +33,8 @@ public class AutoFishFeature extends Feature {
 
     public void onFishHooked(Minecraft client) {
         if (!this.isEnabled() || client.player == null || client.gameMode == null) return;
+
+        final int gen = generation.get();
 
         System.out.println("[Client-AntiCheat-Safe] Fish hooked for local player!");
 
@@ -44,16 +49,33 @@ public class AutoFishFeature extends Feature {
 
         long actualMinReel = Math.min(minReel, maxReel);
         long actualMaxReel = Math.max(minReel, maxReel);
-        long actualMinCast = Math.min(minCast, maxCast);
-        long actualMaxCast = Math.max(minCast, maxCast);
+        long lowCast = Math.min(minCast, maxCast);
+        long highCast = Math.max(minCast, maxCast);
+        long actualMinCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, lowCast);
+        long actualMaxCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, highCast);
 
         long reelDelay = ThreadLocalRandom.current().nextLong(actualMinReel, actualMaxReel + 1);
         System.out.println("[AutoFish] Reel-in scheduled with menu delay: " + reelDelay + "ms");
 
+        long jumpOffset = Math.min(reelDelay, JUMP_LEAD_MS);
+        long jumpDelay = reelDelay - jumpOffset;
+
         threadScheduler.schedule(() -> {
             if (client.player != null && client.gameMode != null) {
                 client.execute(() -> {
-                    if (!this.isEnabled()) return;
+                    if (!this.isEnabled() || gen != generation.get()) return;
+                    if (ConfigManager.config.fishing.reelJump) {
+                        startJump(client);
+                        System.out.println("[AutoFish] Pre-reel jump executed right before pulling!");
+                    }
+                });
+            }
+        }, jumpDelay, TimeUnit.MILLISECONDS);
+
+        threadScheduler.schedule(() -> {
+            if (client.player != null && client.gameMode != null) {
+                client.execute(() -> {
+                    if (!this.isEnabled() || gen != generation.get()) return;
 
                     var player = client.player;
                     var gameMode = client.gameMode;
@@ -64,21 +86,19 @@ public class AutoFishFeature extends Feature {
                         fishingHand = InteractionHand.OFF_HAND;
                     }
 
-                    player.input.makeJump();
                     gameMode.useItem(player, fishingHand);
                     player.swing(fishingHand);
                     System.out.println("[AutoFish] Organic Reel-in action executed successfully.");
 
-                    long rawCastDelay = ThreadLocalRandom.current().nextLong(actualMinCast, actualMaxCast + 1);
-                    long castDelay = Math.max(400, rawCastDelay);
-                    System.out.println("[AutoFish] Recast scheduled with safety-adjusted delay: " + castDelay + "ms");
+                    long castDelay = ThreadLocalRandom.current().nextLong(actualMinCast, actualMaxCast + 1);
+                    System.out.println("[AutoFish] Recast scheduled with delay: " + castDelay + "ms");
 
                     final InteractionHand finalHand = fishingHand;
 
                     threadScheduler.schedule(() -> {
                         if (client.player != null && client.gameMode != null) {
                             client.execute(() -> {
-                                if (!this.isEnabled()) return;
+                                if (!this.isEnabled() || gen != generation.get()) return;
 
                                 var p2 = client.player;
                                 var gm2 = client.gameMode;
@@ -100,6 +120,8 @@ public class AutoFishFeature extends Feature {
     @Override
     public void onTick(Minecraft client) {
         if (client.player == null || client.level == null || !this.isEnabled()) return;
+
+        tickJump(client);
 
         String currentMode = ConfigManager.config.fishing.fishMode;
 
@@ -129,7 +151,6 @@ public class AutoFishFeature extends Feature {
         long timeoutMs = (long) (ConfigManager.config.fishing.afkTimeoutSeconds * 1000);
 
         if (lastHookTime > 0 && (System.currentTimeMillis() - lastHookTime > timeoutMs)) {
-
             client.player.sendSystemMessage(Component.literal("§c§l[WARNING] §fSystem stopped! AFK/Lag safety timeout triggered."));
 
             playSafetyAlarm(client);
@@ -139,11 +160,30 @@ public class AutoFishFeature extends Feature {
 
     @Override
     public void onToggle(Minecraft client, boolean state) {
+        generation.incrementAndGet();
         if (state) {
             lastHookTime = System.currentTimeMillis();
             lastSkyblockClickTime = 0;
         }
-        ConfigManager.save();
+        releaseJump(client);
+    }
+
+    private void startJump(Minecraft client) {
+        client.options.keyJump.setDown(true);
+        jumpTicksLeft = 2;
+    }
+
+    private void tickJump(Minecraft client) {
+        if (jumpTicksLeft > 0 && --jumpTicksLeft == 0) {
+            client.options.keyJump.setDown(false);
+        }
+    }
+
+    private void releaseJump(Minecraft client) {
+        if (jumpTicksLeft > 0) {
+            client.options.keyJump.setDown(false);
+        }
+        jumpTicksLeft = 0;
     }
 
     private void playSafetyAlarm(Minecraft client) {

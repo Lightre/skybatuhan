@@ -1,6 +1,5 @@
 package com.lightre.skybatuhan.base;
 
-import com.lightre.skybatuhan.manager.ConfigManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
@@ -9,20 +8,18 @@ import net.minecraft.ChatFormatting;
 public abstract class Feature {
     private final String name;
     private KeyMapping keyBinding;
+    private volatile boolean enabled = false;
 
     public Feature(String name) {
         this.name = name;
-        ConfigManager.config.featureStates.putIfAbsent(name, false);
     }
 
     public void toggle(Minecraft client) {
-        boolean newState = !isEnabled();
-        setState(client, newState);
+        setState(client, !isEnabled());
     }
 
     public void setState(Minecraft client, boolean state) {
-        ConfigManager.config.featureStates.put(name, state);
-        ConfigManager.save();
+        this.enabled = state;
 
         onToggle(client, state);
 
@@ -32,7 +29,7 @@ public abstract class Feature {
     }
 
     public boolean isEnabled() {
-        return ConfigManager.config.featureStates.getOrDefault(name, false);
+        return enabled;
     }
 
     public void setKeyBinding(KeyMapping kb) {

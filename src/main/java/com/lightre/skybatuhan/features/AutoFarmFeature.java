@@ -3,6 +3,7 @@ package com.lightre.skybatuhan.features;
 import com.lightre.skybatuhan.base.Feature;
 import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.manager.PointConfigManager;
+import com.lightre.skybatuhan.base.ModConfig;
 import com.lightre.skybatuhan.util.FarmPoint;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvents;
@@ -15,6 +16,7 @@ public class AutoFarmFeature extends Feature {
     private Vec3 lastPos = Vec3.ZERO;
     private long lastMovementTime = 0;
     private long lastWaypointTime = 0;
+    private boolean keysHeld = false;
 
     public AutoFarmFeature() {
         super("Auto Farm");
@@ -39,6 +41,12 @@ public class AutoFarmFeature extends Feature {
     private void handleSafety(Minecraft client, Vec3 currentPos, long now) {
         var player = client.player;
         if (player == null) return;
+
+        if (hasNoMovement(currentMovement())) {
+            lastMovementTime = now;
+            lastPos = currentPos;
+            return;
+        }
 
         if (currentPos.distanceTo(lastPos) > ConfigManager.config.safety.threshold) {
             lastMovementTime = now;
@@ -83,6 +91,7 @@ public class AutoFarmFeature extends Feature {
                     client.getConnection().sendCommand("home");
                 }
                 homeCommandDone = true;
+                isReversed = false;
                 player.playSound(SoundEvents.NOTE_BLOCK_BELL.value(), 1.0f, 1.0f);
             }
         } else if (data.homePoint != null && data.homePoint.distanceTo(currentPos) >= ConfigManager.config.farming.general.pointRange) {
@@ -116,12 +125,26 @@ public class AutoFarmFeature extends Feature {
         client.player.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
     }
 
+    private ModConfig.MoveSettings currentMovement() {
+        return isReversed ? ConfigManager.config.farming.farmingMovements.secondMove : ConfigManager.config.farming.farmingMovements.firstMove;
+    }
+
+    private boolean hasNoMovement(ModConfig.MoveSettings m) {
+        return !m.forward && !m.left && !m.back && !m.right;
+    }
+
     private void applyMovement(Minecraft client) {
-        var movement = isReversed ? ConfigManager.config.farming.farmingMovements.secondMove : ConfigManager.config.farming.farmingMovements.firstMove;
+        var movement = currentMovement();
+
+        if (hasNoMovement(movement)) {
+            if (keysHeld) resetMovement(client);
+            return;
+        }
 
         boolean anyMovementEnabled = movement.forward || movement.left || movement.back || movement.right;
 
         if (!anyMovementEnabled) {
+            if (keysHeld) resetMovement(client);
             return;
         }
 
@@ -131,6 +154,8 @@ public class AutoFarmFeature extends Feature {
         client.options.keyLeft.setDown(movement.left);
         client.options.keyDown.setDown(movement.back);
         client.options.keyRight.setDown(movement.right);
+
+        keysHeld = true;
     }
 
     private void resetMovement(Minecraft client) {
@@ -139,6 +164,7 @@ public class AutoFarmFeature extends Feature {
         client.options.keyLeft.setDown(false);
         client.options.keyDown.setDown(false);
         client.options.keyRight.setDown(false);
+        keysHeld = false;
     }
 
     @Override
@@ -172,20 +198,17 @@ public class AutoFarmFeature extends Feature {
         }).start();
     }
 
-    public void undoLastPoint(Minecraft client) {
-        if (!PointConfigManager.data.waypoints.isEmpty()) {
-            PointConfigManager.data.waypoints.removeLast();
-            PointConfigManager.save();
-            if (client.player != null)
-                client.player.sendSystemMessage(Component.literal("§e[SkyBatuhan] Last turning point removed."));
-        }
+    public boolean undoLastPoint() {
+        if (PointConfigManager.data.waypoints.isEmpty()) return false;
+
+        PointConfigManager.data.waypoints.removeLast();
+        PointConfigManager.save();
+        return true;
     }
 
-    public void clearAll(Minecraft client) {
+    public void clearAll() {
         PointConfigManager.data.waypoints.clear();
         PointConfigManager.data.homePoint = null;
         PointConfigManager.save();
-        if (client.player != null)
-            client.player.sendSystemMessage(Component.literal("§c[SkyBatuhan] All turning points data removed."));
     }
 }
