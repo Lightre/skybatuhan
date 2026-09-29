@@ -30,6 +30,13 @@ public class AutoFishFeature extends Feature {
     // ACTION SLOT: eklenen sabitler ve alan
     private static final long ACTION_SLOT_MIN_DELAY_MS = 25L;
     private static final long ACTION_SLOT_MAX_DELAY_MS = 75L;
+    // ENTITY HOOK: oltaya entity takilma kurtarma ayarlari
+    private static final long ENTITY_RECOVERY_MIN_MS = 25L;
+    private static final long ENTITY_RECOVERY_MAX_MS = 75L;
+    private static final double ENTITY_CHECK_RADIUS = 2.0;
+    private static final long ENTITY_WAIT_MIN_MS = 1000L;
+    private static final long ENTITY_WAIT_MAX_MS = 2000L;
+    private long lastEntityHookTime = 0L;
     // Action slot sirasinda kapatilirsa eski slota donebilmek icin (-1 = yok)
     private int pendingRestoreSlot = -1;
 
@@ -199,6 +206,7 @@ public class AutoFishFeature extends Feature {
         if (client.player == null || client.level == null || !this.isEnabled()) return;
 
         tickJump(client);
+        handleEntityHookRecovery(client);
 
         String currentMode = ConfigManager.config.fishing.fishMode;
 
@@ -211,12 +219,10 @@ public class AutoFishFeature extends Feature {
                         if (entity.hasCustomName() && entity.getCustomName() != null) {
                             String nameString = entity.getCustomName().getString();
                             if (nameString.contains("!") || nameString.contains("§c!")) {
-                                if (client.player.distanceToSqr(entity) < 144.0) {
-                                    System.out.println("[AutoFish] Skyblock ArmorStand '!' detected! Triggering organic loop...");
-                                    lastSkyblockClickTime = now;
-                                    onFishHooked(client);
-                                    break;
-                                }
+                                System.out.println("[AutoFish] Skyblock ArmorStand '!' detected! Triggering organic loop...");
+                                lastSkyblockClickTime = now;
+                                onFishHooked(client);
+                                break;
                             }
                         }
                     }
@@ -241,6 +247,7 @@ public class AutoFishFeature extends Feature {
         if (state) {
             lastHookTime = System.currentTimeMillis();
             lastSkyblockClickTime = 0;
+            lastEntityHookTime = 0L;
             scheduleInitialCast(client, gen);
         }
         releaseJump(client);
@@ -250,6 +257,71 @@ public class AutoFishFeature extends Feature {
             client.player.getInventory().setSelectedSlot(pendingRestoreSlot);
         }
         pendingRestoreSlot = -1;
+    }
+
+    // ================= ENTITY HOOK RECOVERY =================
+    private boolean isEntityHooked(Minecraft client) {
+        return client.player != null && client.player.fishing != null && client.player.fishing.getHookedIn() != null;
+    }
+
+    private void handleEntityHookRecovery(Minecraft client) {
+        if (!isEntityHooked(client)) return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastEntityHookTime <= 75L) return;
+        lastEntityHookTime = now;
+
+        final int gen = generation.get();
+        long recoveryDelay = ThreadLocalRandom.current().nextLong(ENTITY_RECOVERY_MIN_MS, ENTITY_RECOVERY_MAX_MS + 1);
+        System.out.println("[AutoFish] Entity hook detected, recovery in " + recoveryDelay + "ms");
+
+        threadScheduler.schedule(() -> client.execute(() -> recoverFromEntityHook(client, gen)), recoveryDelay, TimeUnit.MILLISECONDS);
+    }
+
+    private void recoverFromEntityHook(Minecraft client, int gen) {
+        if (!this.isEnabled() || gen != generation.get()) return;
+
+        var player = client.player;
+        var gameMode = client.gameMode;
+        if (player == null || gameMode == null) return;
+
+        InteractionHand hand = player.getMainHandItem().is(Items.FISHING_ROD) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+
+        gameMode.useItem(player, hand);
+        player.swing(hand);
+        System.out.println("[AutoFish] Recovered from entity hook");
+
+        ModConfig.FishingCategory fishConfig = ConfigManager.config.fishing;
+        long lowCast = Math.min((long) fishConfig.minCastDelay, (long) fishConfig.maxCastDelay);
+        long highCast = Math.max((long) fishConfig.minCastDelay, (long) fishConfig.maxCastDelay);
+        long minCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, lowCast);
+        long maxCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, highCast);
+
+        if (hasNearbyEntities(client)) {
+            System.out.println("[AutoFish] Entities nearby, waiting before recast...");
+            long waitDelay = ThreadLocalRandom.current().nextLong(ENTITY_WAIT_MIN_MS, ENTITY_WAIT_MAX_MS + 1);
+            threadScheduler.schedule(() -> client.execute(() -> {
+                if (!this.isEnabled() || gen != generation.get()) return;
+                scheduleRecast(client, hand, gen, minCast, maxCast);
+            }), waitDelay, TimeUnit.MILLISECONDS);
+        } else {
+            System.out.println("[AutoFish] No entities nearby, continuing...");
+            scheduleRecast(client, hand, gen, minCast, maxCast);
+        }
+    }
+
+    private boolean hasNearbyEntities(Minecraft client) {
+        if (client.player == null || client.level == null) return false;
+        double radiusSquared = ENTITY_CHECK_RADIUS * ENTITY_CHECK_RADIUS;
+
+        for (Entity entity : client.level.entitiesForRendering()) {
+            if (entity != client.player && !(entity instanceof ArmorStand)) {
+                if (client.player.distanceToSqr(entity) < radiusSquared) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // ================= INITIAL CAST =================
