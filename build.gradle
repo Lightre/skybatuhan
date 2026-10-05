@@ -20,6 +20,8 @@ repositories {
         name = "Quilt"
         url = "https://maven.quiltmc.org/repository/release/"
     }
+    maven { url = "https://maven.notenoughupdates.org/releases/"
+    }
     // Modrinth Maven
     exclusiveContent {
         forRepository {
@@ -40,26 +42,30 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-    // YACL (Modrinth - Version ID: DoR7RYgi)
-    implementation "maven.modrinth:1eAoo2KR:DoR7RYgi"
 
     // ModMenu
     compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
     runtimeOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+    //MoulConfig
+    implementation "org.notenoughupdates.moulconfig:modern-26.2:4.7.2"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.2.0"
+
+    // Jar-in-jar: ship MoulConfig and Kotlin inside the mod jar (the include configuration is not transitive)
+    include "org.notenoughupdates.moulconfig:modern-26.2:4.7.2"
+    include "org.jetbrains.kotlin:kotlin-stdlib:2.2.0"
 }
 
 processResources {
     inputs.property "version", project.version
     inputs.property "minecraft_version", project.minecraft_version
     inputs.property "loader_version", project.loader_version
-    inputs.property "yacl_version", project.yacl_version
     inputs.property "modmenu_version", project.modmenu_version
 
     filesMatching("fabric.mod.json") {
         expand "version": inputs.properties.version,
                 "minecraft_version": inputs.properties.minecraft_version,
                 "loader_version": inputs.properties.loader_version,
-                "yacl_version": project.yacl_version,
                 "modmenu_version": project.modmenu_version
     }
 }
@@ -92,3 +98,25 @@ publishing {
         }
     }
 }
+
+def buildInfoDir = layout.buildDirectory.dir("generated/sources/buildinfo")
+
+tasks.register("generateBuildInfo") {
+    def outDir = buildInfoDir
+    def ver = project.version.toString()
+    inputs.property("version", ver)
+    outputs.dir(outDir)
+    doLast {
+        def f = outDir.get().file("com/lightre/skybatuhan/BuildInfo.java").asFile
+        f.parentFile.mkdirs()
+        f.text = "package com.lightre.skybatuhan;\n\n" +
+                "public final class BuildInfo {\n" +
+                "    public static final String VERSION = \"${ver}\";\n" +
+                "    private BuildInfo() {}\n" +
+                "}\n"
+    }
+}
+
+sourceSets.main.java.srcDir(buildInfoDir)
+tasks.named("compileJava") { dependsOn("generateBuildInfo") }
+tasks.named("sourcesJar") { dependsOn("generateBuildInfo") }
