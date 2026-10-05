@@ -4,6 +4,8 @@ import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.manager.PointConfigManager;
 import com.lightre.skybatuhan.manager.ModuleManager;
 import com.lightre.skybatuhan.manager.CommandManager;
+import com.lightre.skybatuhan.manager.DisconnectNotifier;
+import com.lightre.skybatuhan.manager.ReconnectManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import org.slf4j.Logger;
@@ -19,6 +21,8 @@ public class SkyBatuhan implements ClientModInitializer {
         PointConfigManager.load();
         ModuleManager.init();
         CommandManager.init();
+        DisconnectNotifier.init();
+        ReconnectManager.init();
 
         ClientTickEvents.END_CLIENT_TICK.register(ModuleManager::onTick);
     }

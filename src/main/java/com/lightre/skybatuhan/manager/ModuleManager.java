@@ -10,9 +10,12 @@ import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
+import io.github.notenoughupdates.moulconfig.common.IMinecraft;
+import com.lightre.skybatuhan.base.ModConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+
 
 public class ModuleManager {
     private static final List<Feature> features = new ArrayList<>();
@@ -23,12 +26,17 @@ public class ModuleManager {
             Identifier.fromNamespaceAndPath(SkyBatuhan.MOD_ID, "main")
     );
 
+    private static boolean lastFarmCfg = false;
+    private static boolean lastFishCfg = false;
     private static KeyMapping addPointKey;
     private static KeyMapping setHomeKey;
+    private static KeyMapping menuKey;
+    private static boolean menuOpen = false;
+
 
     public static void init() {
         register();
-
+        menuKey = registerKey("menu", GLFW.GLFW_KEY_RIGHT_SHIFT);
         addPointKey = registerKey("addpoint", GLFW.GLFW_KEY_UNKNOWN);
         setHomeKey = registerKey("sethome", GLFW.GLFW_KEY_UNKNOWN);
     }
@@ -44,6 +52,29 @@ public class ModuleManager {
 
     public static void onTick(Minecraft client) {
         if (client.player == null) return;
+        while (menuKey.consumeClick()) openMenu();
+        if (menuOpen && client.gui.screen() == null) {
+            menuOpen = false;
+            ConfigManager.save();
+        }
+
+        ModConfig cfg = ConfigManager.config;
+
+        if (cfg.farming.autoFarmEnabled != lastFarmCfg) {
+            lastFarmCfg = cfg.farming.autoFarmEnabled;
+            farmFeature.setState(client, lastFarmCfg);
+        } else if (farmFeature.isEnabled() != cfg.farming.autoFarmEnabled) {
+            cfg.farming.autoFarmEnabled = farmFeature.isEnabled();
+            lastFarmCfg = cfg.farming.autoFarmEnabled;
+        }
+
+        if (cfg.fishing.autoFishEnabled != lastFishCfg) {
+            lastFishCfg = cfg.fishing.autoFishEnabled;
+            fishFeature.setState(client, lastFishCfg);
+        } else if (fishFeature.isEnabled() != cfg.fishing.autoFishEnabled) {
+            cfg.fishing.autoFishEnabled = fishFeature.isEnabled();
+            lastFishCfg = cfg.fishing.autoFishEnabled;
+        }
 
         for (Feature f : features) {
             while (f.getKeyBinding().consumeClick()) f.toggle(client);
@@ -70,5 +101,28 @@ public class ModuleManager {
 
     public static AutoFishFeature getFishFeature() {
         return fishFeature;
+    }
+
+    public static void disableAll(Minecraft client) {
+        for (Feature f : features) {
+            if (f.isEnabled()) {
+                try {
+                    f.setState(client, false);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static void openMenu() {
+        if (ConfigManager.getManaged() == null) {
+            System.out.println("[SkyBatuhan] managed config is null, menu not opened");
+            return;
+        }
+        Minecraft.getInstance().schedule(() -> {
+            IMinecraft.INSTANCE.openWrappedScreen(ConfigManager.getManaged().getEditor());
+            menuOpen = true;
+        });
     }
 }

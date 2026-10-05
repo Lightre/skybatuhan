@@ -1,6 +1,5 @@
 package com.lightre.skybatuhan.manager;
 
-import com.lightre.skybatuhan.config.ModConfigScreen;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -65,9 +64,7 @@ public class CommandManager {
     private static int mainGui(CommandContext<FabricClientCommandSource> context) {
         Minecraft client = Minecraft.getInstance();
 
-        client.execute(() -> {
-            client.setScreenAndShow(ModConfigScreen.create(client.gui.screen()));
-        });
+        client.execute(ModuleManager::openMenu);
 
         return 1;
     }

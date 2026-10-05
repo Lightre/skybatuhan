@@ -24,11 +24,10 @@
 ## Prerequisites
 
 - [Fabric API](https://modrinth.com/mod/fabric-api)
-- [YACL (Yet Another Config Lib)](https://modrinth.com/mod/yacl)
 
 ## Installation
 
-1. Got [Fabric API](https://modrinth.com/mod/fabric-api) and [YACL](https://modrinth.com/mod/yacl)? Good.
+1. Got [Fabric API](https://modrinth.com/mod/fabric-api)? Good.
 2. Drop the mod JAR in your `mods` folder.
 3. Fire up Minecraft with Fabric.
 
