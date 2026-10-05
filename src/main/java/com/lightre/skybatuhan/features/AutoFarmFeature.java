@@ -17,6 +17,13 @@ public class AutoFarmFeature extends Feature {
     private long lastMovementTime = 0;
     private long lastWaypointTime = 0;
     private boolean keysHeld = false;
+    private volatile long lastHomeCommandAt = 0L;
+    private Object lastLevel = null;
+
+    /** Time of the last /home command sent by Auto Farm (used by Reconnect to ignore the world change it causes). */
+    public long getLastHomeCommandAt() {
+        return lastHomeCommandAt;
+    }
 
     public AutoFarmFeature() {
         super("Auto Farm");
@@ -29,6 +36,15 @@ public class AutoFarmFeature extends Feature {
 
         long now = System.currentTimeMillis();
         Vec3 currentPos = new Vec3(client.player.getX(), client.player.getY(), client.player.getZ());
+
+        // New level (rejoined, world change): restart the stuck detection from scratch
+        if (client.level != lastLevel) {
+            lastLevel = client.level;
+            lastPos = currentPos;
+            lastMovementTime = now;
+            lastTriggeredPoint = null;
+            homeCommandDone = false;
+        }
 
         handleSafety(client, currentPos, now);
 
@@ -48,12 +64,12 @@ public class AutoFarmFeature extends Feature {
             return;
         }
 
-        if (currentPos.distanceTo(lastPos) > ConfigManager.config.safety.threshold) {
+        if (currentPos.distanceTo(lastPos) > ConfigManager.config.farming.safety.threshold) {
             lastMovementTime = now;
             lastPos = currentPos;
         }
 
-        if (now - lastMovementTime > ConfigManager.config.safety.timeoutMs) {
+        if (now - lastMovementTime > ConfigManager.config.farming.safety.timeoutMs) {
             if (!alarmTriggered) {
                 alarmTriggered = true;
                 playAlarm(client);
@@ -89,6 +105,7 @@ public class AutoFarmFeature extends Feature {
             if (!homeCommandDone) {
                 if (client.getConnection() != null) {
                     client.getConnection().sendCommand("home");
+                    lastHomeCommandAt = System.currentTimeMillis();
                 }
                 homeCommandDone = true;
                 isReversed = false;
