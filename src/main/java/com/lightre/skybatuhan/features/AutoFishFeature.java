@@ -43,10 +43,28 @@ public class AutoFishFeature extends Feature {
     private static final double SKYBLOCK_MARKER_RADIUS_SQUARED = 9.0;
     private long lastEntityHookTime = 0L;
     private int pendingRestoreSlot = -1;
-    private boolean stopRequested = false;
 
     public AutoFishFeature() {
         super("Auto Fish");
+    }
+
+    @Override
+    public void toggle(Minecraft client) {
+        if (!this.isEnabled()) {
+            if (client.player == null || !hasFishingRod(client)) {
+                if (client.player != null) {
+                    client.player.sendSystemMessage(Component.literal("§c[AutoFish] §fHold a fishing rod to start."));
+                }
+                return;
+            }
+        }
+        super.toggle(client);
+    }
+
+    private boolean hasFishingRod(Minecraft client) {
+        if (client.player == null) return false;
+        return client.player.getMainHandItem().is(Items.FISHING_ROD) ||
+                client.player.getOffhandItem().is(Items.FISHING_ROD);
     }
 
     public void onFishHooked(Minecraft client) {
@@ -175,7 +193,6 @@ public class AutoFishFeature extends Feature {
 
         int originalSlot = player.getInventory().getSelectedSlot();
         if (targetSlot == originalSlot) {
-            // action slot is the rod slot: using it would reel/cast the rod
             scheduleRecast(client, finalHand, gen, actualMinCast, actualMaxCast);
             return;
         }
@@ -211,11 +228,6 @@ public class AutoFishFeature extends Feature {
     @Override
     public void onTick(Minecraft client) {
         if (client.player == null || client.level == null || !this.isEnabled()) return;
-        if (stopRequested) {
-            stopRequested = false;
-            this.toggle(client);
-            return;
-        }
 
         tickJump(client);
         handleEntityHookRecovery(client);
@@ -265,7 +277,6 @@ public class AutoFishFeature extends Feature {
             lastHookTime = System.currentTimeMillis();
             lastSkyBlockClickTime = 0;
             lastEntityHookTime = 0L;
-            stopRequested = false;
             scheduleInitialCast(client, gen);
         }
         releaseJump(client);
@@ -302,7 +313,6 @@ public class AutoFishFeature extends Feature {
         var gameMode = client.gameMode;
         if (player == null || gameMode == null) return;
 
-        // already reeled in by an earlier action: casting now would throw a new bobber
         if (isEntityNotHooked(client)) return;
 
         lastEntityHookTime = System.currentTimeMillis();
@@ -357,14 +367,7 @@ public class AutoFishFeature extends Feature {
             rodHand = InteractionHand.OFF_HAND;
         }
 
-        if (rodHand == null) {
-            client.player.sendSystemMessage(Component.literal("§c[AutoFish] §fHold a fishing rod to start."));
-            stopRequested = true;
-            return;
-        }
-
-        // Bobber is already in the water: casting again would reel it in
-        if (client.player.fishing != null) return;
+        if (rodHand == null || client.player.fishing != null) return;
 
         final InteractionHand castHand = rodHand;
         long delay = ThreadLocalRandom.current().nextLong(150L, 400L);
