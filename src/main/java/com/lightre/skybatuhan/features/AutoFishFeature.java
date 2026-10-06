@@ -37,6 +37,7 @@ public class AutoFishFeature extends Feature {
     private static final long ENTITY_HOOK_COOLDOWN_MS = 1500L;
     private long lastEntityHookTime = 0L;
     private int pendingRestoreSlot = -1;
+    private boolean stopRequested = false;
 
     public AutoFishFeature() {
         super("Auto Fish");
@@ -167,6 +168,11 @@ public class AutoFishFeature extends Feature {
         if (player == null || gameMode == null) return;
 
         int originalSlot = player.getInventory().getSelectedSlot();
+        if (targetSlot == originalSlot) {
+            // action slot is the rod slot: using it would reel/cast the rod
+            scheduleRecast(client, finalHand, gen, actualMinCast, actualMaxCast);
+            return;
+        }
         pendingRestoreSlot = originalSlot;
         player.getInventory().setSelectedSlot(targetSlot);
 
@@ -199,6 +205,11 @@ public class AutoFishFeature extends Feature {
     @Override
     public void onTick(Minecraft client) {
         if (client.player == null || client.level == null || !this.isEnabled()) return;
+        if (stopRequested) {
+            stopRequested = false;
+            this.toggle(client);
+            return;
+        }
 
         tickJump(client);
         handleEntityHookRecovery(client);
@@ -245,6 +256,7 @@ public class AutoFishFeature extends Feature {
             lastHookTime = System.currentTimeMillis();
             lastSkyblockClickTime = 0;
             lastEntityHookTime = 0L;
+            stopRequested = false;
             scheduleInitialCast(client, gen);
         }
         releaseJump(client);
@@ -338,6 +350,7 @@ public class AutoFishFeature extends Feature {
 
         if (rodHand == null) {
             client.player.sendSystemMessage(Component.literal("§c[AutoFish] §fHold a fishing rod to start."));
+            stopRequested = true;
             return;
         }
 
