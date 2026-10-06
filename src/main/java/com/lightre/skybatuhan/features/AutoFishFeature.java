@@ -34,6 +34,7 @@ public class AutoFishFeature extends Feature {
     private static final double ENTITY_CHECK_RADIUS = 2.0;
     private static final long ENTITY_WAIT_MIN_MS = 1000L;
     private static final long ENTITY_WAIT_MAX_MS = 2000L;
+    private static final long ENTITY_HOOK_COOLDOWN_MS = 1500L;
     private long lastEntityHookTime = 0L;
     private int pendingRestoreSlot = -1;
 
@@ -263,7 +264,7 @@ public class AutoFishFeature extends Feature {
         if (!isEntityHooked(client)) return;
 
         long now = System.currentTimeMillis();
-        if (now - lastEntityHookTime <= 75L) return;
+        if (now - lastEntityHookTime <= ENTITY_HOOK_COOLDOWN_MS) return;
         lastEntityHookTime = now;
 
         final int gen = generation.get();
@@ -279,6 +280,11 @@ public class AutoFishFeature extends Feature {
         var player = client.player;
         var gameMode = client.gameMode;
         if (player == null || gameMode == null) return;
+
+        // already reeled in by an earlier action: casting now would throw a new bobber
+        if (!isEntityHooked(client)) return;
+
+        lastEntityHookTime = System.currentTimeMillis();
 
         InteractionHand hand = player.getMainHandItem().is(Items.FISHING_ROD) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 
