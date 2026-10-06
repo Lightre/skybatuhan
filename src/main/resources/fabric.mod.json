@@ -18,6 +18,9 @@
   "entrypoints": {
     "client": [
       "com.lightre.skybatuhan.SkyBatuhan"
+    ],
+    "modmenu": [
+      "com.lightre.skybatuhan.compat.ModMenuIntegration"
     ]
   },
   "mixins": [
