@@ -20,6 +20,15 @@ public class AutoFarmFeature extends Feature {
     private volatile long lastStuckStopAt = 0L;
     private boolean keysHeld = false;
     private Object lastLevel = null;
+    private static final long LANDING_MAX_MS = 3000L;
+    private boolean landing = false;
+    private long landingStartedAt = 0L;
+
+    /** Hypixel spawns the player in the air after a world change: sneak until on the ground (max 3 s). */
+    public void startLanding(Minecraft client) {
+        landing = true;
+        landingStartedAt = System.currentTimeMillis();
+    }
 
     /** time of the last stuck stop (session monitor uses it to spot a failed recovery). */
     public long getLastStuckStopAt() {
@@ -51,6 +60,19 @@ public class AutoFarmFeature extends Feature {
             lastMovementTime = now;
             lastTriggeredPoint = null;
             homeCommandDone = false;
+        }
+
+        if (landing) {
+            if (client.player.onGround() || now - landingStartedAt > LANDING_MAX_MS) {
+                client.options.keyShift.setDown(false);
+                landing = false;
+            } else {
+                client.options.keyShift.setDown(true);
+            }
+            // The stuck timer starts after landing
+            lastPos = currentPos;
+            lastMovementTime = now;
+            return;
         }
 
         handleSafety(client, currentPos, now);
@@ -199,7 +221,12 @@ public class AutoFarmFeature extends Feature {
             lastMovementTime = System.currentTimeMillis();
             alarmTriggered = false;
             homeCommandDone = false;
+            landing = false;
         } else {
+            if (landing) {
+                client.options.keyShift.setDown(false);
+                landing = false;
+            }
             resetMovement(client);
             lastLevel = null;
         }
