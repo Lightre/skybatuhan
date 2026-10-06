@@ -5,6 +5,7 @@ import com.lightre.skybatuhan.base.Feature;
 import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.base.ModConfig;
 import com.lightre.skybatuhan.manager.Webhook;
+import com.lightre.skybatuhan.base.enums.FishingOptions.FishMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -166,15 +167,8 @@ public class AutoFishFeature extends Feature {
         return ConfigManager.config.fishing.useActionSlot && ConfigManager.config.fishing.actionSlot != null;
     }
 
-    private int parseActionSlot() {
-        String digits = ConfigManager.config.fishing.actionSlot.replaceAll("[^0-9]", "");
-        if (digits.isEmpty()) return 0;
-        int slot = Integer.parseInt(digits) - 1;
-        return Math.clamp(slot, 0, 8);
-    }
-
     private void scheduleActionSlot(Minecraft client, InteractionHand finalHand, int gen, long actualMinCast, long actualMaxCast) {
-        int targetSlot = parseActionSlot();
+        int targetSlot = ConfigManager.config.fishing.actionSlot.getHotbarIndex();
         long switchDelay = ThreadLocalRandom.current().nextLong(ACTION_SLOT_MIN_DELAY_MS, ACTION_SLOT_MAX_DELAY_MS + 1);
 
         threadScheduler.schedule(() -> {
@@ -232,10 +226,10 @@ public class AutoFishFeature extends Feature {
         tickJump(client);
         handleEntityHookRecovery(client);
 
-        String currentMode = ConfigManager.config.fishing.fishMode;
+        FishMode currentMode = ConfigManager.config.fishing.fishMode;
 
         // ================= SKYBLOCK MODE =================
-        if ("Skyblock".equalsIgnoreCase(currentMode) && client.player.fishing != null) {
+        if (currentMode == FishMode.SKYBLOCK && client.player.fishing != null) {
             long now = System.currentTimeMillis();
 
             if (now - lastSkyBlockClickTime > 3000) {
@@ -247,7 +241,7 @@ public class AutoFishFeature extends Feature {
                             String nameString = entity.getCustomName().getString();
 
                             if (nameString.contains("!!!") && hook.distanceToSqr(entity) <= SKYBLOCK_MARKER_RADIUS_SQUARED) {
-                                SkyBatuhan.LOGGER.info("[AutoFish] Skyblock ArmorStand '!!!' detected near bobber! Triggering organic loop...");
+                                SkyBatuhan.LOGGER.info("[AutoFish] SkyBlock ArmorStand '!!!' detected near bobber! Triggering organic loop...");
                                 lastSkyBlockClickTime = now;
                                 onFishHooked(client);
                                 break;
