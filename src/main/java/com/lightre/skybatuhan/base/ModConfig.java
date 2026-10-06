@@ -171,12 +171,12 @@ public class ModConfig extends Config {
     public static class SafetyCategory {
         @Expose
         @ConfigOption(name = "Timeout (ms)", desc = "Safety timeout")
-        @ConfigEditorSlider(minValue = 0f, maxValue = 10000f, minStep = 10f)
+        @ConfigEditorSlider(minValue = 500f, maxValue = 10000f, minStep = 10f)
         public int timeoutMs = 3000;
 
         @Expose
         @ConfigOption(name = "Threshold", desc = "Safety threshold")
-        @ConfigEditorSlider(minValue = 0f, maxValue = 1f, minStep = 0.1f)
+        @ConfigEditorSlider(minValue = 0.1f, maxValue = 1f, minStep = 0.1f)
         public double threshold = 0.1;
     }
 
@@ -205,7 +205,7 @@ public class ModConfig extends Config {
     public static class GeneralSettings {
         @Expose
         @ConfigOption(name = "Point Range", desc = "Waypoint reach range")
-        @ConfigEditorSlider(minValue = 0f, maxValue = 3f, minStep = 0.1f)
+        @ConfigEditorSlider(minValue = 0.1f, maxValue = 3f, minStep = 0.1f)
         public double pointRange = 0.8;
 
         @Expose

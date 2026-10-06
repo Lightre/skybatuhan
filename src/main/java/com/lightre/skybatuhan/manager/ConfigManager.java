@@ -51,6 +51,9 @@ public class ConfigManager {
 
             config.fishing.minCastDelay = Math.max(config.fishing.minCastDelay, ModConfig.FishingCategory.MIN_CAST_DELAY_MS);
             config.fishing.maxCastDelay = Math.max(config.fishing.maxCastDelay, ModConfig.FishingCategory.MIN_CAST_DELAY_MS);
+            config.farming.safety.timeoutMs = Math.max(500, config.farming.safety.timeoutMs);
+            config.farming.safety.threshold = Math.max(0.1, config.farming.safety.threshold);
+            config.farming.general.pointRange = Math.max(0.1, config.farming.general.pointRange);
 
             if (config.disconnect == null) config.disconnect = new ModConfig.DisconnectCategory();
             if (config.disconnect.reconnect == null) config.disconnect.reconnect = new ModConfig.ReconnectCategory();
