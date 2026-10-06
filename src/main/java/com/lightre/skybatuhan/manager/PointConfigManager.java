@@ -9,6 +9,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
@@ -35,7 +36,8 @@ public class PointConfigManager {
 
     public static void save() {
         try {
-            if (!CONFIG_DIR.toFile().exists()) CONFIG_DIR.toFile().mkdirs();
+            Files.createDirectories(CONFIG_DIR);
+
             try (FileWriter writer = new FileWriter(POINTS_FILE)) {
                 GSON.toJson(data, writer);
             }
