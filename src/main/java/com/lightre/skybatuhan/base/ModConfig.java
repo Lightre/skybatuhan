@@ -4,16 +4,14 @@ import com.google.gson.annotations.Expose;
 import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.manager.Webhook;
 import com.lightre.skybatuhan.manager.SessionMonitor;
+import com.lightre.skybatuhan.util.ModInfo;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.Social;
 import io.github.notenoughupdates.moulconfig.annotations.*;
-import io.github.notenoughupdates.moulconfig.common.ClickType;
-import io.github.notenoughupdates.moulconfig.common.IMinecraft;
 import io.github.notenoughupdates.moulconfig.common.MyResourceLocation;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
-import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.client.gui.screens.Screen;
@@ -25,10 +23,7 @@ public class ModConfig extends Config {
     @Override
     public StructuredText getTitle() {
         checkLatestVersion();
-        String installed = FabricLoader.getInstance()
-                .getModContainer("skybatuhan")
-                .map(c -> c.getMetadata().getVersion().getFriendlyString())
-                .orElse("?");
+        String installed = ModInfo.getVersion();
         String latest = latestVersion;
         String update = (latest != null && isNewer(latest, installed))
                 ? " (v" + latest + " available)"
@@ -65,7 +60,6 @@ public class ModConfig extends Config {
 
     private static void openLink(String url) {
         Minecraft client = Minecraft.getInstance();
-
         Screen previousScreen = client.gui.screen();
 
         client.execute(() -> {
@@ -78,8 +72,9 @@ public class ModConfig extends Config {
                                 SkyBatuhan.LOGGER.error("An error occurred while trying to open the link: {}", url, e);
                             }
                         }
-                        assert previousScreen != null;
-                        client.setScreenAndShow(previousScreen);
+                        if (previousScreen != null) {
+                            client.setScreenAndShow(previousScreen);
+                        }
                     },
                     url,
                     false
@@ -133,7 +128,7 @@ public class ModConfig extends Config {
 
 
     public static class AboutCategory {
-        @ConfigOption(name = "§a§lv" + com.lightre.skybatuhan.BuildInfo.VERSION, desc = "§7Changelog on GitHub")
+        @ConfigOption(name = "§a§lReleases", desc = "§7Open releases and changelog on GitHub")
         @ConfigEditorButton(buttonText = "Open")
         public transient Runnable changelog = () -> openLink("https://github.com/lightre/skybatuhan/releases");
 
@@ -152,21 +147,21 @@ public class ModConfig extends Config {
     }
 
     public static class LibrariesCategory {
-        @ConfigOption(name = "Minecraft", desc = "26.2 (Java 25)")
+        @ConfigOption(name = "Minecraft", desc = "Target Minecraft & Java runtime")
         @ConfigEditorInfoText
-        public transient String minecraft = "";
+        public transient String minecraft = ModInfo.getMinecraftVersion() + " (Java " + ModInfo.getJavaVersion() + ")";
 
-        @ConfigOption(name = "Fabric Loader", desc = "v0.19.5, mod loading")
+        @ConfigOption(name = "Fabric Loader", desc = "Mod loader version")
         @ConfigEditorInfoText
-        public transient String loader = "";
+        public transient String loader = "v" + ModInfo.getLoaderVersion();
 
-        @ConfigOption(name = "Fabric API", desc = "v0.161.0, events, keybinds and rendering hooks")
+        @ConfigOption(name = "Fabric API", desc = "Events, keybinds and hooks")
         @ConfigEditorInfoText
-        public transient String fabricApi = "";
+        public transient String fabricApi = "v" + ModInfo.getFabricApiVersion();
 
-        @ConfigOption(name = "MoulConfig", desc = "v4.7.2, this settings menu")
+        @ConfigOption(name = "MoulConfig", desc = "Settings GUI library")
         @ConfigEditorInfoText
-        public transient String moulConfig = "";
+        public transient String moulConfig = "v" + ModInfo.getMoulConfigVersion();
 
         @ConfigOption(name = "MoulConfig on GitHub", desc = "Open the library page")
         @ConfigEditorButton(buttonText = "Open")
