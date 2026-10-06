@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.ModConfig;
+import org.jspecify.annotations.NonNull;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -47,20 +48,7 @@ public class Webhook {
         String id = cfg.discordUserId == null ? "" : cfg.discordUserId.trim();
         boolean ping = USER_ID_PATTERN.matcher(id).matches();
 
-        String content = (ping ? "<@" + id + "> " : "") + text;
-        if (content.length() > MAX_MESSAGE_LENGTH) {
-            content = content.substring(0, MAX_MESSAGE_LENGTH);
-        }
-
-        JsonObject body = new JsonObject();
-        body.addProperty("content", content);
-
-        // only the configured user may be pinged
-        JsonObject allowedMentions = new JsonObject();
-        JsonArray users = new JsonArray();
-        if (ping) users.add(id);
-        allowedMentions.add("users", users);
-        body.add("allowed_mentions", allowedMentions);
+        JsonObject body = getBody(text, ping, id);
 
         try {
             HttpRequest request = HttpRequest.newBuilder(URI.create(url))
@@ -79,5 +67,23 @@ public class Webhook {
         } catch (Exception e) {
             SkyBatuhan.LOGGER.warn("Could not send webhook: {}", e.toString());
         }
+    }
+
+    private static @NonNull JsonObject getBody(String text, boolean ping, String id) {
+        String content = (ping ? "<@" + id + "> " : "") + text;
+        if (content.length() > MAX_MESSAGE_LENGTH) {
+            content = content.substring(0, MAX_MESSAGE_LENGTH);
+        }
+
+        JsonObject body = new JsonObject();
+        body.addProperty("content", content);
+
+        // only the configured user may be pinged
+        JsonObject allowedMentions = new JsonObject();
+        JsonArray users = new JsonArray();
+        if (ping) users.add(id);
+        allowedMentions.add("users", users);
+        body.add("allowed_mentions", allowedMentions);
+        return body;
     }
 }
