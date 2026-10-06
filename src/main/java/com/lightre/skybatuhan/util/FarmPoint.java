@@ -5,7 +5,8 @@ import net.minecraft.world.phys.Vec3;
 public class FarmPoint {
     public double x, y, z;
 
-    // Empty constructor is required for GSON to read.
+    // empty constructor is required for GSON to read
+    @SuppressWarnings("unused")
     public FarmPoint() {
     }
 
