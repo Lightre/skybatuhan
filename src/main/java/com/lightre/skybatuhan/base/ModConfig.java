@@ -1,10 +1,12 @@
 package com.lightre.skybatuhan.base;
 
 import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.manager.Webhook;
 import com.lightre.skybatuhan.manager.SessionMonitor;
 import com.lightre.skybatuhan.util.ModInfo;
+import com.lightre.skybatuhan.base.enums.FishingOptions.*;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.Social;
 import io.github.notenoughupdates.moulconfig.annotations.*;
@@ -248,9 +250,9 @@ public class ModConfig extends Config {
         public boolean autoFishEnabled = false;
 
         @Expose
-        @ConfigOption(name = "Fishing Mode", desc = "Vanilla or Skyblock")
-        @ConfigEditorDropdown(values = {"Vanilla", "Skyblock"})
-        public String fishMode = "Vanilla";
+        @ConfigOption(name = "Fishing Mode", desc = "Vanilla or SkyBlock")
+        @ConfigEditorDropdown
+        public FishMode fishMode = FishMode.VANILLA;
 
         @Expose
         @ConfigOption(name = "Jump On Reel", desc = "Jump when reeling in the rod")
@@ -291,8 +293,8 @@ public class ModConfig extends Config {
 
         @Expose
         @ConfigOption(name = "Action Slot", desc = "")
-        @ConfigEditorDropdown(values = {"Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6", "Slot 7", "Slot 8", "Slot 9"})
-        public String actionSlot = "Slot 3";
+        @ConfigEditorDropdown
+        public ActionSlot actionSlot = ActionSlot.SLOT_3;
     }
 
     public static class DisconnectCategory {
