@@ -20,6 +20,7 @@ import net.minecraft.client.gui.screens.Screen;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class ModConfig extends Config {
     @Override
     public StructuredText getTitle() {
@@ -68,24 +69,18 @@ public class ModConfig extends Config {
         Minecraft client = Minecraft.getInstance();
         Screen previousScreen = client.gui.screen();
 
-        client.execute(() -> {
-            client.setScreenAndShow(new ConfirmLinkScreen(
-                    confirmed -> {
-                        if (confirmed) {
-                            try {
-                                net.minecraft.util.Util.getPlatform().openUri(java.net.URI.create(url));
-                            } catch (Exception e) {
-                                SkyBatuhan.LOGGER.error("An error occurred while trying to open the link: {}", url, e);
-                            }
-                        }
-                        if (previousScreen != null) {
-                            client.setScreenAndShow(previousScreen);
-                        }
-                    },
-                    url,
-                    false
-            ));
-        });
+        client.execute(() -> client.setScreenAndShow(new ConfirmLinkScreen(confirmed -> {
+            if (confirmed) {
+                try {
+                    net.minecraft.util.Util.getPlatform().openUri(java.net.URI.create(url));
+                } catch (Exception e) {
+                    SkyBatuhan.LOGGER.error("An error occurred while trying to open the link: {}", url, e);
+                }
+            }
+            if (previousScreen != null) {
+                client.setScreenAndShow(previousScreen);
+            }
+        }, url, false)));
     }
 
     private static volatile String latestVersion = null;
