@@ -43,6 +43,7 @@ public class SessionMonitor {
     private static final long WORLD_CHANGE_GRACE_MS = 20_000L;
     private static final long CONNECT_TIMEOUT_MS = 90_000L;
     private static final long LEFT_GAME_WINDOW_MS = 5000L;
+    private static final long GAP_TOLERANCE_MS = 45_000L;   // server transfers leave the game for a while
 
     private static State state = State.IDLE;
     private static long nextActionAt = 0L;
@@ -53,6 +54,8 @@ public class SessionMonitor {
     private static long lastResumeAt = 0L;
     private static long ignoreWorldChangeUntil = 0L;
     private static long lastWorldChangeAt = 0L;
+    private static boolean awayDuringCommands = false;
+    private static ServerData lastServerData = null;
 
     // true while we are inside a level on a connection
     private static boolean inGame = false;
@@ -77,6 +80,7 @@ public class SessionMonitor {
             if (multiplayer) {
                 lastServer = server.ip;
                 lastAddress = server.ip;
+                lastServerData = server;
             } else {
                 lastServer = "singleplayer";
             }
@@ -348,14 +352,16 @@ public class SessionMonitor {
 
         switch (state) {
             case COOLDOWN, WAIT_BEFORE -> {
-                if (wantReconnect && connected) {
+                if (connected && wantReconnect) {
                     cancelRecovery("player joined manually");
                     return;
                 }
-                if (!wantReconnect && !connected) {
-                    // Connection gone without a kick screen: the player quit by hand
-                    if (now - leftGameAt > LEFT_GAME_WINDOW_MS) cancelRecovery("player left the game");
-                    return;
+                if (!inGame && !wantReconnect) {
+                    // Moving between servers leaves the game for a while: normal, wait for it
+                    if (now - leftGameAt < GAP_TOLERANCE_MS) return;
+                    // Still gone: the connection is really lost, reconnect ourselves
+                    wantReconnect = true;
+                    report("Connection lost while waiting, will reconnect.");
                 }
                 if (now < nextActionAt) return;
 
@@ -382,7 +388,17 @@ public class SessionMonitor {
             }
             case RUN_COMMANDS -> {
                 if (!connected) {
-                    if (now - leftGameAt > LEFT_GAME_WINDOW_MS) cancelRecovery("player left the game");
+                    awayDuringCommands = true;
+                    // Server transfers (reconfiguration screen, resource pack) take a while: wait for them
+                    if (!inGame && now > Math.max(leftGameAt, nextActionAt) + GAP_TOLERANCE_MS) {
+                        onAttemptFailed(client, "Lost connection during recovery", null);
+                    }
+                    return;
+                }
+                if (awayDuringCommands) {
+                    // Just arrived somewhere new: settle before the next command
+                    awayDuringCommands = false;
+                    schedule(State.RUN_COMMANDS, randomMs(cfg.settleMinSeconds, cfg.settleMaxSeconds));
                     return;
                 }
                 if (now < nextActionAt) return;
@@ -452,7 +468,8 @@ public class SessionMonitor {
         SkyBatuhan.LOGGER.info("[Session] Connecting to {} (attempt {}/{})", address, attemptNumber(), cfg.maxAttempts);
 
         try {
-            ServerData data = new ServerData("Reconnect", address, ServerData.Type.OTHER);
+            ServerData data = lastServerData != null ? lastServerData
+                    : new ServerData("Reconnect", address, ServerData.Type.OTHER);
             ConnectScreen.startConnecting(new TitleScreen(), client, ServerAddress.parseString(address), data, false, null);
         } catch (Exception e) {
             SkyBatuhan.LOGGER.warn("Could not start connecting", e);
@@ -461,6 +478,7 @@ public class SessionMonitor {
     }
 
     private static void buildCommands(ModConfig.ReconnectCategory cfg, boolean includeLobby) {
+        awayDuringCommands = false;
         commands.clear();
         // After a fresh join we are already in the lobby, /lobby is only for when we stayed connected
         if (includeLobby) addCommand(cfg.lobbyCommand);
