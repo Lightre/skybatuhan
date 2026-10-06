@@ -196,7 +196,7 @@ public class ModConfig extends Config {
         @Expose
         @ConfigOption(name = "Point Range", desc = "Waypoint reach range")
         @ConfigEditorSlider(minValue = 0f, maxValue = 3f, minStep = 0.1f)
-        public double pointRange = 0.1;
+        public double pointRange = 0.8;
 
         @Expose
         @ConfigOption(name = "Attack Enabled", desc = "Attack nearby targets while farming")
