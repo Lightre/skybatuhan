@@ -70,11 +70,7 @@ public class SessionMonitor {
     private static Screen lastHandledScreen = null;
 
     public static void init() {
-        ClientLevelEvents.AFTER_CLIENT_LEVEL_CHANGE.register((client, level) -> {
-            if (level == null) {
-                markLeftGame(client);
-                return;
-            }
+        ClientLevelEvents.AFTER_CLIENT_LEVEL_CHANGE.register((client, _) -> {
 
             ServerData server = client.getCurrentServer();
             boolean multiplayer = server != null;
@@ -99,9 +95,9 @@ public class SessionMonitor {
             if (multiplayer) onWorldChange(client);
         });
 
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> markLeftGame(client));
+        ClientPlayConnectionEvents.DISCONNECT.register((_, client) -> markLeftGame(client));
 
-        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+        ScreenEvents.AFTER_INIT.register((client, screen, _, _) -> {
             if (screen instanceof DisconnectedScreen) {
                 onDisconnectedScreen(client, screen);
             }
@@ -267,7 +263,8 @@ public class SessionMonitor {
     }
 
     private static void enterCooldown(String reason, ModConfig.ReconnectCategory cfg, long now) {
-        long end = failureTimes.peekFirst() + windowMs(cfg);
+        Long firstFailure = failureTimes.peekFirst();
+        long end = (firstFailure != null ? firstFailure : now) + windowMs(cfg);
         state = State.COOLDOWN;
         nextActionAt = end;
 
