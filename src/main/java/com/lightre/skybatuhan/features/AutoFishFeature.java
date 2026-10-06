@@ -27,7 +27,7 @@ public class AutoFishFeature extends Feature {
     });
 
     private long lastHookTime = 0;
-    private long lastSkyblockClickTime = 0;
+    private long lastSkyBlockClickTime = 0;
     private int jumpTicksLeft = 0;
     private static final long JUMP_LEAD_MS = 100L;
     private final AtomicInteger generation = new AtomicInteger();
@@ -40,6 +40,7 @@ public class AutoFishFeature extends Feature {
     private static final long ENTITY_WAIT_MIN_MS = 1000L;
     private static final long ENTITY_WAIT_MAX_MS = 2000L;
     private static final long ENTITY_HOOK_COOLDOWN_MS = 1500L;
+    private static final double SKYBLOCK_MARKER_RADIUS_SQUARED = 9.0;
     private long lastEntityHookTime = 0L;
     private int pendingRestoreSlot = -1;
     private boolean stopRequested = false;
@@ -136,7 +137,7 @@ public class AutoFishFeature extends Feature {
                     p2.swing(finalHand);
                     SkyBatuhan.LOGGER.info("[AutoFish] Organic Recast action executed successfully. Loop continues!");
 
-                    lastSkyblockClickTime = System.currentTimeMillis();
+                    lastSkyBlockClickTime = System.currentTimeMillis();
                 });
             }
         }, castDelay, TimeUnit.MILLISECONDS);
@@ -222,20 +223,22 @@ public class AutoFishFeature extends Feature {
         String currentMode = ConfigManager.config.fishing.fishMode;
 
         // ================= SKYBLOCK MODE =================
-        if ("Skyblock".equalsIgnoreCase(currentMode)) {
+        if ("Skyblock".equalsIgnoreCase(currentMode) && client.player.fishing != null) {
             long now = System.currentTimeMillis();
-            if (now - lastSkyblockClickTime > 3000 && client.player.fishing != null) {
+
+            if (now - lastSkyBlockClickTime > 3000) {
+                var hook = client.player.fishing;
+
                 for (Entity entity : client.level.entitiesForRendering()) {
                     if (entity instanceof ArmorStand || entity.getType().toString().contains("armor_stand")) {
                         if (entity.hasCustomName() && entity.getCustomName() != null) {
                             String nameString = entity.getCustomName().getString();
-                            if (nameString.contains("!") || nameString.contains("§c!")) {
-                                if (client.player.distanceToSqr(entity) < 144.0) {
-                                    SkyBatuhan.LOGGER.info("[AutoFish] Skyblock ArmorStand '!' detected! Triggering organic loop...");
-                                    lastSkyblockClickTime = now;
-                                    onFishHooked(client);
-                                    break;
-                                }
+
+                            if (nameString.contains("!!!") && hook.distanceToSqr(entity) <= SKYBLOCK_MARKER_RADIUS_SQUARED) {
+                                SkyBatuhan.LOGGER.info("[AutoFish] Skyblock ArmorStand '!!!' detected near bobber! Triggering organic loop...");
+                                lastSkyBlockClickTime = now;
+                                onFishHooked(client);
+                                break;
                             }
                         }
                     }
@@ -260,7 +263,7 @@ public class AutoFishFeature extends Feature {
         int gen = generation.incrementAndGet();
         if (state) {
             lastHookTime = System.currentTimeMillis();
-            lastSkyblockClickTime = 0;
+            lastSkyBlockClickTime = 0;
             lastEntityHookTime = 0L;
             stopRequested = false;
             scheduleInitialCast(client, gen);
