@@ -11,9 +11,12 @@ import io.github.notenoughupdates.moulconfig.common.ClickType;
 import io.github.notenoughupdates.moulconfig.common.IMinecraft;
 import io.github.notenoughupdates.moulconfig.common.MyResourceLocation;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
+import net.minecraft.client.gui.screens.Screen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,23 +64,27 @@ public class ModConfig extends Config {
     }
 
     private static void openLink(String url) {
-        try {
-            String os = System.getProperty("os.name", "").toLowerCase();
-            if (os.contains("win")) {
-                new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url).start();
-            } else if (os.contains("mac")) {
-                new ProcessBuilder("open", url).start();
-            } else {
-                new ProcessBuilder("xdg-open", url).start();
-            }
-        } catch (Exception e) {
-            SkyBatuhan.LOGGER.warn("Could not open link", e);
-            IMinecraft.INSTANCE.sendClickableChatMessage(
-                    StructuredText.of("Click here to open the link"),
+        Minecraft client = Minecraft.getInstance();
+
+        Screen previousScreen = client.gui.screen();
+
+        client.execute(() -> {
+            client.setScreenAndShow(new ConfirmLinkScreen(
+                    confirmed -> {
+                        if (confirmed) {
+                            try {
+                                net.minecraft.util.Util.getPlatform().openUri(java.net.URI.create(url));
+                            } catch (Exception e) {
+                                SkyBatuhan.LOGGER.error("An error occurred while trying to open the link: {}", url, e);
+                            }
+                        }
+                        assert previousScreen != null;
+                        client.setScreenAndShow(previousScreen);
+                    },
                     url,
-                    ClickType.OPEN_LINK
-            );
-        }
+                    false
+            ));
+        });
     }
 
     private static volatile String latestVersion = null;
