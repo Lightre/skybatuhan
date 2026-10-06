@@ -15,6 +15,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ public class SessionMonitor {
 
     private static final long QUICK_FAIL_MS = 5 * 60 * 1000L;       // trouble this soon after resuming = failed attempt
     private static final long WORLD_CHANGE_COOLDOWN_MS = 5000L;
-    private static final long WORLD_CHANGE_GRACE_MS = 20_000L;
+    private static final long WORLD_CHANGE_GRACE_MS = 5_000L;
     private static final long CONNECT_TIMEOUT_MS = 90_000L;
     private static final long LEFT_GAME_WINDOW_MS = 5000L;
     private static final long GAP_TOLERANCE_MS = 45_000L;   // server transfers leave the game for a while
@@ -284,6 +285,17 @@ public class SessionMonitor {
         SkyBatuhan.LOGGER.info("[Session] Recovery cancelled: {}", reason);
     }
 
+    public static void resetAttempts() {
+        failureTimes.clear();
+        lastResumeAt = 0L;
+        if (state == State.COOLDOWN) cancelRecovery("attempts reset by the player");
+
+        var player = Minecraft.getInstance().player;
+        if (player != null) {
+            player.sendSystemMessage(Component.literal("§6[SkyBatuhan] §fReconnect attempts reset."));
+        }
+    }
+
     private static void abort(String reason) {
         state = State.IDLE;
         wantReconnect = false;
@@ -300,6 +312,7 @@ public class SessionMonitor {
             var farm = ModuleManager.getFarmFeature();
             farm.resetDirection(); // /warp starts at the farm's beginning
             farm.setState(client, true);
+            farm.startLanding(client);
         }
 
         state = State.IDLE;
