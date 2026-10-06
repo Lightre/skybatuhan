@@ -72,7 +72,7 @@ public class AutoFishFeature extends Feature {
         long actualMaxCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, highCast);
 
         long reelDelay = ThreadLocalRandom.current().nextLong(actualMinReel, actualMaxReel + 1);
-        SkyBatuhan.LOGGER.info("[AutoFish] Reel-in scheduled with menu delay: " + reelDelay + "ms");
+        SkyBatuhan.LOGGER.info("[AutoFish] Reel-in scheduled with menu delay: {}ms", reelDelay);
 
         long jumpOffset = Math.min(reelDelay, JUMP_LEAD_MS);
         long jumpDelay = reelDelay - jumpOffset;
@@ -121,7 +121,7 @@ public class AutoFishFeature extends Feature {
 
     private void scheduleRecast(Minecraft client, InteractionHand finalHand, int gen, long actualMinCast, long actualMaxCast) {
         long castDelay = ThreadLocalRandom.current().nextLong(actualMinCast, actualMaxCast + 1);
-        SkyBatuhan.LOGGER.info("[AutoFish] Recast scheduled with delay: " + castDelay + "ms");
+        SkyBatuhan.LOGGER.info("[AutoFish] Recast scheduled with delay: {}ms", castDelay);
 
         threadScheduler.schedule(() -> {
             if (client.player != null && client.gameMode != null) {
@@ -274,12 +274,12 @@ public class AutoFishFeature extends Feature {
     }
 
     // ================= ENTITY HOOK RECOVERY =================
-    private boolean isEntityHooked(Minecraft client) {
-        return client.player != null && client.player.fishing != null && client.player.fishing.getHookedIn() != null;
+    private boolean isEntityNotHooked(Minecraft client) {
+        return client.player == null || client.player.fishing == null || client.player.fishing.getHookedIn() == null;
     }
 
     private void handleEntityHookRecovery(Minecraft client) {
-        if (!isEntityHooked(client)) return;
+        if (isEntityNotHooked(client)) return;
 
         long now = System.currentTimeMillis();
         if (now - lastEntityHookTime <= ENTITY_HOOK_COOLDOWN_MS) return;
@@ -287,7 +287,7 @@ public class AutoFishFeature extends Feature {
 
         final int gen = generation.get();
         long recoveryDelay = ThreadLocalRandom.current().nextLong(ENTITY_RECOVERY_MIN_MS, ENTITY_RECOVERY_MAX_MS + 1);
-        SkyBatuhan.LOGGER.info("[AutoFish] Entity hook detected, recovery in " + recoveryDelay + "ms");
+        SkyBatuhan.LOGGER.info("[AutoFish] Entity hook detected, recovery in {}ms", recoveryDelay);
 
         threadScheduler.schedule(() -> client.execute(() -> recoverFromEntityHook(client, gen)), recoveryDelay, TimeUnit.MILLISECONDS);
     }
@@ -300,7 +300,7 @@ public class AutoFishFeature extends Feature {
         if (player == null || gameMode == null) return;
 
         // already reeled in by an earlier action: casting now would throw a new bobber
-        if (!isEntityHooked(client)) return;
+        if (isEntityNotHooked(client)) return;
 
         lastEntityHookTime = System.currentTimeMillis();
 
