@@ -20,7 +20,7 @@ public class FishingHookMixin {
 
     @Inject(method = "onSyncedDataUpdated", at = @At("TAIL"))
     private void onClientTrackedDataChanged(EntityDataAccessor<?> accessor, CallbackInfo ci) {
-        if (ConfigManager.config == null || "Skyblock".equalsIgnoreCase(ConfigManager.config.fishing.fishMode)) {
+        if (ConfigManager.config == null || "Skyblock".equalsIgnoreCase(String.valueOf(ConfigManager.config.fishing.fishMode))) {
             return;
         }
 
