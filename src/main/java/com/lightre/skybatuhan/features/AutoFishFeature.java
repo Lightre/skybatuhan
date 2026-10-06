@@ -207,16 +207,18 @@ public class AutoFishFeature extends Feature {
         // ================= SKYBLOCK MODE =================
         if ("Skyblock".equalsIgnoreCase(currentMode)) {
             long now = System.currentTimeMillis();
-            if (now - lastSkyblockClickTime > 3000) {
+            if (now - lastSkyblockClickTime > 3000 && client.player.fishing != null) {
                 for (Entity entity : client.level.entitiesForRendering()) {
                     if (entity instanceof ArmorStand || entity.getType().toString().contains("armor_stand")) {
                         if (entity.hasCustomName() && entity.getCustomName() != null) {
                             String nameString = entity.getCustomName().getString();
                             if (nameString.contains("!") || nameString.contains("§c!")) {
-                                System.out.println("[AutoFish] Skyblock ArmorStand '!' detected! Triggering organic loop...");
-                                lastSkyblockClickTime = now;
-                                onFishHooked(client);
-                                break;
+                                if (client.player.distanceToSqr(entity) < 144.0) {
+                                    System.out.println("[AutoFish] Skyblock ArmorStand '!' detected! Triggering organic loop...");
+                                    lastSkyblockClickTime = now;
+                                    onFishHooked(client);
+                                    break;
+                                }
                             }
                         }
                     }
