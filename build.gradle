@@ -98,25 +98,3 @@ publishing {
         }
     }
 }
-
-def buildInfoDir = layout.buildDirectory.dir("generated/sources/buildinfo")
-
-tasks.register("generateBuildInfo") {
-    def outDir = buildInfoDir
-    def ver = project.version.toString()
-    inputs.property("version", ver)
-    outputs.dir(outDir)
-    doLast {
-        def f = outDir.get().file("com/lightre/skybatuhan/BuildInfo.java").asFile
-        f.parentFile.mkdirs()
-        f.text = "package com.lightre.skybatuhan;\n\n" +
-                "public final class BuildInfo {\n" +
-                "    public static final String VERSION = \"${ver}\";\n" +
-                "    private BuildInfo() {}\n" +
-                "}\n"
-    }
-}
-
-sourceSets.main.java.srcDir(buildInfoDir)
-tasks.named("compileJava") { dependsOn("generateBuildInfo") }
-tasks.named("sourcesJar") { dependsOn("generateBuildInfo") }
