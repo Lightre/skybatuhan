@@ -2,6 +2,7 @@ package com.lightre.skybatuhan.base;
 
 import com.google.gson.annotations.Expose;
 import com.lightre.skybatuhan.manager.Webhook;
+import com.lightre.skybatuhan.manager.SessionMonitor;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.Social;
 import io.github.notenoughupdates.moulconfig.annotations.*;
@@ -373,6 +374,10 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Attempt Memory (min)", desc = "How long failed attempts are remembered. After this the pause ends and it tries again")
         @ConfigEditorSlider(minValue = 5f, maxValue = 240f, minStep = 5f)
         public int attemptWindowMinutes = 60;
+
+        @ConfigOption(name = "Reset Attempts", desc = "Forget past failed attempts and end a pause")
+        @ConfigEditorButton(buttonText = "Reset")
+        public transient Runnable resetAttempts = SessionMonitor::resetAttempts;
 
         @Expose
         @ConfigOption(name = "Settle Min (s)", desc = "Shortest wait after joining and after each command")
