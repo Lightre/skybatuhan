@@ -10,6 +10,8 @@ import io.github.notenoughupdates.moulconfig.common.IMinecraft;
 import io.github.notenoughupdates.moulconfig.common.MyResourceLocation;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.Version;
+import net.fabricmc.loader.api.VersionParsingException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,13 +25,21 @@ public class ModConfig extends Config {
                 .map(c -> c.getMetadata().getVersion().getFriendlyString())
                 .orElse("?");
         String latest = latestVersion;
-        String update = (latest != null && !latest.equals(installed))
+        String update = (latest != null && isNewer(latest, installed))
                 ? " (v" + latest + " available)"
                 : "";
         return StructuredText.of("SkyBatuhan").aqua()
                 .append(StructuredText.of(" v" + installed + " by ").grey())
                 .append(StructuredText.of("Lightre, Peregrints").red())
                 .append(StructuredText.of(update).green());
+    }
+
+    private static boolean isNewer(String latest, String installed) {
+        try {
+            return Version.parse(latest).compareTo(Version.parse(installed)) > 0;
+        } catch (VersionParsingException e) {
+            return false;
+        }
     }
 
     @Override
