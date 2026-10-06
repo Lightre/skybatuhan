@@ -5,6 +5,7 @@ import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.manager.PointConfigManager;
 import com.lightre.skybatuhan.base.ModConfig;
 import com.lightre.skybatuhan.util.FarmPoint;
+import com.lightre.skybatuhan.manager.Webhook;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.network.chat.Component;
@@ -16,13 +17,19 @@ public class AutoFarmFeature extends Feature {
     private Vec3 lastPos = Vec3.ZERO;
     private long lastMovementTime = 0;
     private long lastWaypointTime = 0;
+    private volatile long lastStuckStopAt = 0L;
     private boolean keysHeld = false;
-    private volatile long lastHomeCommandAt = 0L;
     private Object lastLevel = null;
 
-    /** Time of the last /home command sent by Auto Farm (used by Reconnect to ignore the world change it causes). */
-    public long getLastHomeCommandAt() {
-        return lastHomeCommandAt;
+    /** time of the last stuck stop (session monitor uses it to spot a failed recovery). */
+    public long getLastStuckStopAt() {
+        return lastStuckStopAt;
+    }
+
+    /** called before resuming after a recovery: the player is back at the start. */
+    public void resetDirection() {
+        isReversed = false;
+        lastTriggeredPoint = null;
     }
 
     public AutoFarmFeature() {
@@ -72,6 +79,8 @@ public class AutoFarmFeature extends Feature {
         if (now - lastMovementTime > ConfigManager.config.farming.safety.timeoutMs) {
             if (!alarmTriggered) {
                 alarmTriggered = true;
+                lastStuckStopAt = now;
+                Webhook.notifyIfEnabled("**Auto Farm stopped**: stuck detected.");
                 playAlarm(client);
                 player.sendSystemMessage(Component.literal("§c§l[WARNING] §fSystem stopped! Stuck was detected."));
                 this.toggle(client);
@@ -105,7 +114,6 @@ public class AutoFarmFeature extends Feature {
             if (!homeCommandDone) {
                 if (client.getConnection() != null) {
                     client.getConnection().sendCommand("home");
-                    lastHomeCommandAt = System.currentTimeMillis();
                 }
                 homeCommandDone = true;
                 isReversed = false;

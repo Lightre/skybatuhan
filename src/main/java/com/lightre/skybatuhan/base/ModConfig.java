@@ -1,7 +1,7 @@
 package com.lightre.skybatuhan.base;
 
 import com.google.gson.annotations.Expose;
-import com.lightre.skybatuhan.manager.DisconnectNotifier;
+import com.lightre.skybatuhan.manager.Webhook;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.Social;
 import io.github.notenoughupdates.moulconfig.annotations.*;
@@ -319,7 +319,7 @@ public class ModConfig extends Config {
 
         @ConfigOption(name = "Send Test Message", desc = "Sends a test message to check the webhook")
         @ConfigEditorButton(buttonText = "Send")
-        public transient Runnable sendTest = DisconnectNotifier::sendTest;
+        public transient Runnable sendTest = Webhook::sendTest;
 
         @Expose
         @ConfigOption(name = "Reconnect for Farming", desc = "Leave, wait and rejoin after a disconnect or world change")
@@ -335,9 +335,9 @@ public class ModConfig extends Config {
         public boolean enabled = false;
 
         @Expose
-        @ConfigOption(name = "Server Address", desc = "Server to rejoin")
+        @ConfigOption(name = "Server Address", desc = "Fallback server. The server you were just on is used first")
         @ConfigEditorText
-        public String serverAddress = "eu.hypixel.net";
+        public String serverAddress = "hypixel.net";
 
         @Expose
         @ConfigOption(name = "Trigger On Disconnect", desc = "Start when the server kicks you or the connection drops")
@@ -348,11 +348,6 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Trigger On World Change", desc = "Leave the server when the world changes")
         @ConfigEditorBoolean
         public boolean onWorldChange = true;
-
-        @Expose
-        @ConfigOption(name = "Only While Farming", desc = "Do nothing if Auto Farm is off")
-        @ConfigEditorBoolean
-        public boolean onlyWhenActive = true;
 
         @Expose
         @ConfigOption(name = "Min Wait (s)", desc = "Shortest wait before the first reconnect")
@@ -390,7 +385,12 @@ public class ModConfig extends Config {
         public int settleMaxSeconds = 15;
 
         @Expose
-        @ConfigOption(name = "Join Command", desc = "First command after joining")
+        @ConfigOption(name = "Lobby Command", desc = "Sent first when the world changed but you are still connected. Leave empty to skip")
+        @ConfigEditorText
+        public String lobbyCommand = "/lobby";
+
+        @Expose
+        @ConfigOption(name = "Join Command", desc = "Command that enters SkyBlock from the lobby")
         @ConfigEditorText
         public String skyblockCommand = "/skyblock";
 

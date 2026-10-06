@@ -4,6 +4,7 @@ import com.lightre.skybatuhan.base.Feature;
 import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.base.ModConfig;
 // import com.lightre.skybatuhan.manager.ModuleManager;
+import com.lightre.skybatuhan.manager.Webhook;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -243,6 +244,7 @@ public class AutoFishFeature extends Feature {
 
         if (lastHookTime > 0 && (System.currentTimeMillis() - lastHookTime > timeoutMs)) {
             client.player.sendSystemMessage(Component.literal("§c§l[WARNING] §fSystem stopped! AFK/Lag safety timeout triggered."));
+            Webhook.notifyIfEnabled("**Auto Fish stopped**: AFK/lag timeout.");
 
             playSafetyAlarm(client);
             this.toggle(client);
