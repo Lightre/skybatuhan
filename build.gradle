@@ -20,7 +20,8 @@ repositories {
         name = "Quilt"
         url = "https://maven.quiltmc.org/repository/release/"
     }
-    maven { url = "https://maven.notenoughupdates.org/releases/"
+    maven {
+        url = "https://maven.notenoughupdates.org/releases/"
     }
     // Modrinth Maven
     exclusiveContent {
@@ -42,18 +43,17 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-
     // ModMenu
     compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
     runtimeOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
 
-    //MoulConfig
-    implementation "org.notenoughupdates.moulconfig:modern-26.2:4.7.2"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.2.0"
+    // MoulConfig & Kotlin
+    implementation "org.notenoughupdates.moulconfig:modern-${project.minecraft_version}:${project.moulconfig_version}"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:${project.kotlin_version}"
 
     // Jar-in-jar: ship MoulConfig and Kotlin inside the mod jar (the include configuration is not transitive)
-    include "org.notenoughupdates.moulconfig:modern-26.2:4.7.2"
-    include "org.jetbrains.kotlin:kotlin-stdlib:2.2.0"
+    include "org.notenoughupdates.moulconfig:modern-${project.minecraft_version}:${project.moulconfig_version}"
+    include "org.jetbrains.kotlin:kotlin-stdlib:${project.kotlin_version}"
 }
 
 processResources {
