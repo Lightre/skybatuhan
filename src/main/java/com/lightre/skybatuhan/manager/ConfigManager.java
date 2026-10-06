@@ -6,6 +6,7 @@ import io.github.notenoughupdates.moulconfig.managed.ManagedConfig;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class ConfigManager {
@@ -26,7 +27,7 @@ public class ConfigManager {
         boolean existed = CONFIG_FILE.exists();
 
         try {
-            CONFIG_DIR.toFile().mkdirs();
+            Files.createDirectories(CONFIG_DIR);
 
             managed = ManagedConfig.create(CONFIG_FILE, ModConfig.class);
             config = managed.getInstance();
