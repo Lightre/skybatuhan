@@ -1,7 +1,6 @@
 package com.lightre.skybatuhan.base;
 
 import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
 import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.manager.Webhook;
 import com.lightre.skybatuhan.manager.SessionMonitor;
@@ -58,6 +57,11 @@ public class ModConfig extends Config {
                 "https://github.com/lightre/skybatuhan"
         ));
         return list;
+    }
+
+    @Override
+    public boolean shouldAutoFocusSearchbar() {
+        return true;
     }
 
     private static void openLink(String url) {
@@ -233,13 +237,21 @@ public class ModConfig extends Config {
     }
 
     public static class MoveSettings {
-        @Expose @ConfigOption(name = "Forward", desc = "") @ConfigEditorBoolean
+        @Expose
+        @ConfigOption(name = "Forward", desc = "")
+        @ConfigEditorBoolean
         public boolean forward = false;
-        @Expose @ConfigOption(name = "Back", desc = "") @ConfigEditorBoolean
+        @Expose
+        @ConfigOption(name = "Back", desc = "")
+        @ConfigEditorBoolean
         public boolean back = false;
-        @Expose @ConfigOption(name = "Left", desc = "") @ConfigEditorBoolean
+        @Expose
+        @ConfigOption(name = "Left", desc = "")
+        @ConfigEditorBoolean
         public boolean left = false;
-        @Expose @ConfigOption(name = "Right", desc = "") @ConfigEditorBoolean
+        @Expose
+        @ConfigOption(name = "Right", desc = "")
+        @ConfigEditorBoolean
         public boolean right = false;
     }
 
