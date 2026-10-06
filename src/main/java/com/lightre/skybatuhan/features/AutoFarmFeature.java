@@ -193,6 +193,7 @@ public class AutoFarmFeature extends Feature {
             homeCommandDone = false;
         } else {
             resetMovement(client);
+            lastLevel = null;
         }
     }
 
