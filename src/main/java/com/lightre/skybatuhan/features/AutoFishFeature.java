@@ -144,7 +144,7 @@ public class AutoFishFeature extends Feature {
         String digits = ConfigManager.config.fishing.actionSlot.replaceAll("[^0-9]", "");
         if (digits.isEmpty()) return 0;
         int slot = Integer.parseInt(digits) - 1;
-        return Math.max(0, Math.min(8, slot));
+        return Math.clamp(slot, 0, 8);
     }
 
     private void scheduleActionSlot(Minecraft client, InteractionHand finalHand, int gen, long actualMinCast, long actualMaxCast) {
