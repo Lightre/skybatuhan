@@ -1,6 +1,7 @@
 package com.lightre.skybatuhan.base;
 
 import com.google.gson.annotations.Expose;
+import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.manager.Webhook;
 import com.lightre.skybatuhan.manager.SessionMonitor;
 import io.github.notenoughupdates.moulconfig.Config;
@@ -70,7 +71,7 @@ public class ModConfig extends Config {
                 new ProcessBuilder("xdg-open", url).start();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            SkyBatuhan.LOGGER.warn("Could not open link", e);
             IMinecraft.INSTANCE.sendClickableChatMessage(
                     StructuredText.of("Click here to open the link"),
                     url,
@@ -100,7 +101,7 @@ public class ModConfig extends Config {
                     latestVersion = tag.startsWith("v") ? tag.substring(1) : tag;
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                SkyBatuhan.LOGGER.warn("Update check failed", e);
             }
         }, "SkyBatuhan-VersionCheck");
         t.setDaemon(true);

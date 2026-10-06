@@ -1,9 +1,9 @@
 package com.lightre.skybatuhan.features;
 
+import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.Feature;
 import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.base.ModConfig;
-// import com.lightre.skybatuhan.manager.ModuleManager;
 import com.lightre.skybatuhan.manager.Webhook;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -20,7 +20,11 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class AutoFishFeature extends Feature {
-    private static final ScheduledExecutorService threadScheduler = Executors.newScheduledThreadPool(1);
+    private static final ScheduledExecutorService threadScheduler = Executors.newScheduledThreadPool(1, r -> {
+        Thread t = new Thread(r, "SkyBatuhan-Scheduler");
+        t.setDaemon(true);
+        return t;
+    });
 
     private long lastHookTime = 0;
     private long lastSkyblockClickTime = 0;
@@ -49,7 +53,7 @@ public class AutoFishFeature extends Feature {
 
         final int gen = generation.get();
 
-        System.out.println("[Client-AntiCheat-Safe] Fish hooked for local player!");
+        SkyBatuhan.LOGGER.info("Fish hooked for local player!");
 
         lastHookTime = System.currentTimeMillis();
 
@@ -68,7 +72,7 @@ public class AutoFishFeature extends Feature {
         long actualMaxCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, highCast);
 
         long reelDelay = ThreadLocalRandom.current().nextLong(actualMinReel, actualMaxReel + 1);
-        System.out.println("[AutoFish] Reel-in scheduled with menu delay: " + reelDelay + "ms");
+        SkyBatuhan.LOGGER.info("[AutoFish] Reel-in scheduled with menu delay: " + reelDelay + "ms");
 
         long jumpOffset = Math.min(reelDelay, JUMP_LEAD_MS);
         long jumpDelay = reelDelay - jumpOffset;
@@ -79,7 +83,7 @@ public class AutoFishFeature extends Feature {
                     if (!this.isEnabled() || gen != generation.get()) return;
                     if (ConfigManager.config.fishing.reelJump) {
                         startJump(client);
-                        System.out.println("[AutoFish] Pre-reel jump executed right before pulling!");
+                        SkyBatuhan.LOGGER.info("[AutoFish] Pre-reel jump executed right before pulling!");
                     }
                 });
             }
@@ -101,7 +105,7 @@ public class AutoFishFeature extends Feature {
 
                     gameMode.useItem(player, fishingHand);
                     player.swing(fishingHand);
-                    System.out.println("[AutoFish] Organic Reel-in action executed successfully.");
+                    SkyBatuhan.LOGGER.info("[AutoFish] Organic Reel-in action executed successfully.");
 
                     final InteractionHand finalHand = fishingHand;
 
@@ -117,7 +121,7 @@ public class AutoFishFeature extends Feature {
 
     private void scheduleRecast(Minecraft client, InteractionHand finalHand, int gen, long actualMinCast, long actualMaxCast) {
         long castDelay = ThreadLocalRandom.current().nextLong(actualMinCast, actualMaxCast + 1);
-        System.out.println("[AutoFish] Recast scheduled with delay: " + castDelay + "ms");
+        SkyBatuhan.LOGGER.info("[AutoFish] Recast scheduled with delay: " + castDelay + "ms");
 
         threadScheduler.schedule(() -> {
             if (client.player != null && client.gameMode != null) {
@@ -130,7 +134,7 @@ public class AutoFishFeature extends Feature {
 
                     gm2.useItem(p2, finalHand);
                     p2.swing(finalHand);
-                    System.out.println("[AutoFish] Organic Recast action executed successfully. Loop continues!");
+                    SkyBatuhan.LOGGER.info("[AutoFish] Organic Recast action executed successfully. Loop continues!");
 
                     lastSkyblockClickTime = System.currentTimeMillis();
                 });
@@ -179,7 +183,7 @@ public class AutoFishFeature extends Feature {
 
         gameMode.useItem(player, InteractionHand.MAIN_HAND);
         player.swing(InteractionHand.MAIN_HAND);
-        System.out.println("[AutoFish] Action slot activated");
+        SkyBatuhan.LOGGER.info("[AutoFish] Action slot activated");
 
         long returnDelay = ThreadLocalRandom.current().nextLong(ACTION_SLOT_MIN_DELAY_MS, ACTION_SLOT_MAX_DELAY_MS + 1);
 
@@ -199,7 +203,7 @@ public class AutoFishFeature extends Feature {
 
         if (!this.isEnabled() || gen != generation.get()) return;
 
-        System.out.println("[AutoFish] Returned to rod slot");
+        SkyBatuhan.LOGGER.info("[AutoFish] Returned to rod slot");
         scheduleRecast(client, finalHand, gen, actualMinCast, actualMaxCast);
     }
 
@@ -227,7 +231,7 @@ public class AutoFishFeature extends Feature {
                             String nameString = entity.getCustomName().getString();
                             if (nameString.contains("!") || nameString.contains("§c!")) {
                                 if (client.player.distanceToSqr(entity) < 144.0) {
-                                    System.out.println("[AutoFish] Skyblock ArmorStand '!' detected! Triggering organic loop...");
+                                    SkyBatuhan.LOGGER.info("[AutoFish] Skyblock ArmorStand '!' detected! Triggering organic loop...");
                                     lastSkyblockClickTime = now;
                                     onFishHooked(client);
                                     break;
@@ -283,7 +287,7 @@ public class AutoFishFeature extends Feature {
 
         final int gen = generation.get();
         long recoveryDelay = ThreadLocalRandom.current().nextLong(ENTITY_RECOVERY_MIN_MS, ENTITY_RECOVERY_MAX_MS + 1);
-        System.out.println("[AutoFish] Entity hook detected, recovery in " + recoveryDelay + "ms");
+        SkyBatuhan.LOGGER.info("[AutoFish] Entity hook detected, recovery in " + recoveryDelay + "ms");
 
         threadScheduler.schedule(() -> client.execute(() -> recoverFromEntityHook(client, gen)), recoveryDelay, TimeUnit.MILLISECONDS);
     }
@@ -304,7 +308,7 @@ public class AutoFishFeature extends Feature {
 
         gameMode.useItem(player, hand);
         player.swing(hand);
-        System.out.println("[AutoFish] Recovered from entity hook");
+        SkyBatuhan.LOGGER.info("[AutoFish] Recovered from entity hook");
 
         ModConfig.FishingCategory fishConfig = ConfigManager.config.fishing;
         long lowCast = Math.min((long) fishConfig.minCastDelay, (long) fishConfig.maxCastDelay);
@@ -313,14 +317,14 @@ public class AutoFishFeature extends Feature {
         long maxCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, highCast);
 
         if (hasNearbyEntities(client)) {
-            System.out.println("[AutoFish] Entities nearby, waiting before recast...");
+            SkyBatuhan.LOGGER.info("[AutoFish] Entities nearby, waiting before recast...");
             long waitDelay = ThreadLocalRandom.current().nextLong(ENTITY_WAIT_MIN_MS, ENTITY_WAIT_MAX_MS + 1);
             threadScheduler.schedule(() -> client.execute(() -> {
                 if (!this.isEnabled() || gen != generation.get()) return;
                 scheduleRecast(client, hand, gen, minCast, maxCast);
             }), waitDelay, TimeUnit.MILLISECONDS);
         } else {
-            System.out.println("[AutoFish] No entities nearby, continuing...");
+            SkyBatuhan.LOGGER.info("[AutoFish] No entities nearby, continuing...");
             scheduleRecast(client, hand, gen, minCast, maxCast);
         }
     }
@@ -372,7 +376,7 @@ public class AutoFishFeature extends Feature {
 
             gameMode.useItem(player, castHand);
             player.swing(castHand);
-            System.out.println("[AutoFish] Initial cast executed");
+            SkyBatuhan.LOGGER.info("[AutoFish] Initial cast executed");
         }), delay, TimeUnit.MILLISECONDS);
     }
 

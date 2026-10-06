@@ -1,5 +1,6 @@
 package com.lightre.skybatuhan.manager;
 
+import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.ModConfig;
 import io.github.notenoughupdates.moulconfig.managed.ManagedConfig;
 import net.fabricmc.loader.api.FabricLoader;
@@ -72,8 +73,7 @@ public class ConfigManager {
             if (!existed) save();
 
         } catch (Exception e) {
-            System.err.println("[" + CONFIG_FILE.getName() + "] Ayarlar yuklenirken hata olustu!");
-            e.printStackTrace();
+            SkyBatuhan.LOGGER.error("Could not load config.json, using defaults", e);
             if (managed == null) {
                 config = new ModConfig();
             }
@@ -86,8 +86,7 @@ public class ConfigManager {
                 managed.saveToFile();
             }
         } catch (Exception e) {
-            System.err.println("[" + CONFIG_FILE.getName() + "] Ayarlar kaydedilirken hata olustu.");
-            e.printStackTrace();
+            SkyBatuhan.LOGGER.error("Could not save config.json", e);
         }
     }
 }
