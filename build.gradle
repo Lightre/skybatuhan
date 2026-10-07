@@ -1,6 +1,5 @@
 plugins {
     id 'net.fabricmc.fabric-loom' version "${loom_version}"
-    id 'maven-publish'
     id 'org.jetbrains.kotlin.jvm' version "${kotlin_version}"
 }
 
@@ -90,14 +89,5 @@ jar {
 
     from("LICENSE") {
         rename { "${it}_${projectName}" }
-    }
-}
-
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            artifactId = project.archives_base_name
-            from components.java
-        }
     }
 }
