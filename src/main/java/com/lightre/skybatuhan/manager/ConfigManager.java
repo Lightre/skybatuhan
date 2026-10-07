@@ -36,7 +36,7 @@ public class ConfigManager {
             Files.createDirectories(CONFIG_DIR);
 
             ManagedConfigBuilder<ModConfig> builder = new ManagedConfigBuilder<>(CONFIG_FILE, ModConfig.class);
-            builder.customProcessor(ConfigEditorInfoValue.class, (option, annotation) ->
+            builder.customProcessor(ConfigEditorInfoValue.class, (option, _) ->
                     new GuiOptionEditorInfoText(option, StructuredText.of(String.valueOf(option.get()))));
             managed = new ManagedConfig<>(builder);
             config = managed.getInstance();
