@@ -150,19 +150,19 @@ public class ModConfig extends Config {
     public static class LibrariesCategory {
         @ConfigOption(name = "Minecraft", desc = "Target Minecraft & Java runtime")
         @ConfigEditorInfoValue
-        public transient String minecraft = ModInfo.getMinecraftVersion() + " (Java " + ModInfo.getJavaVersion() + ")";
+        public transient String minecraft = "§a" + ModInfo.getMinecraftVersion() + " §7(Java " + ModInfo.getJavaVersion() + ")";
 
         @ConfigOption(name = "Fabric Loader", desc = "Mod loader version")
         @ConfigEditorInfoValue
-        public transient String loader = "v" + ModInfo.getLoaderVersion();
+        public transient String loader = "§6v" + ModInfo.getLoaderVersion();
 
         @ConfigOption(name = "Fabric API", desc = "Events, keybinds and hooks")
         @ConfigEditorInfoValue
-        public transient String fabricApi = "v" + ModInfo.getFabricApiVersion();
+        public transient String fabricApi = "§ev" + ModInfo.getFabricApiVersion();
 
         @ConfigOption(name = "MoulConfig", desc = "Settings GUI library")
         @ConfigEditorInfoValue
-        public transient String moulConfig = "v" + ModInfo.getMoulConfigVersion();
+        public transient String moulConfig = "§bv" + ModInfo.getMoulConfigVersion();
 
         @ConfigOption(name = "MoulConfig on GitHub", desc = "Open the library page")
         @ConfigEditorButton(buttonText = "Open")
