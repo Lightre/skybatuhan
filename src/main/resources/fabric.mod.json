@@ -34,5 +34,8 @@
   },
   "suggests": {
     "modmenu": ">=${modmenu_version}"
+  },
+  "custom": {
+    "skybatuhan:moulconfig_version": "${moulconfig_version}"
   }
 }
