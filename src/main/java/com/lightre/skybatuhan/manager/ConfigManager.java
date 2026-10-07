@@ -2,7 +2,13 @@ package com.lightre.skybatuhan.manager;
 
 import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.ModConfig;
+import com.lightre.skybatuhan.base.ConfigEditorInfoValue;
+import com.lightre.skybatuhan.base.enums.FishingOptions.ActionSlot;
+import com.lightre.skybatuhan.base.enums.FishingOptions.FishMode;
 import io.github.notenoughupdates.moulconfig.managed.ManagedConfig;
+import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
+import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorInfoText;
+import io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;
@@ -29,7 +35,10 @@ public class ConfigManager {
         try {
             Files.createDirectories(CONFIG_DIR);
 
-            managed = ManagedConfig.create(CONFIG_FILE, ModConfig.class);
+            ManagedConfigBuilder<ModConfig> builder = new ManagedConfigBuilder<>(CONFIG_FILE, ModConfig.class);
+            builder.customProcessor(ConfigEditorInfoValue.class, (option, annotation) ->
+                    new GuiOptionEditorInfoText(option, StructuredText.of(String.valueOf(option.get()))));
+            managed = new ManagedConfig<>(builder);
             config = managed.getInstance();
 
             if (config == null) {
@@ -50,6 +59,9 @@ public class ConfigManager {
 
             if (config.farming.farmingMovements.secondMove == null)
                 config.farming.farmingMovements.secondMove = new ModConfig.MoveSettings();
+
+            if (config.fishing.fishMode == null) config.fishing.fishMode = FishMode.VANILLA;
+            if (config.fishing.actionSlot == null) config.fishing.actionSlot = ActionSlot.SLOT_3;
 
             config.fishing.minCastDelay = Math.max(config.fishing.minCastDelay, ModConfig.FishingCategory.MIN_CAST_DELAY_MS);
             config.fishing.maxCastDelay = Math.max(config.fishing.maxCastDelay, ModConfig.FishingCategory.MIN_CAST_DELAY_MS);
