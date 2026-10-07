@@ -133,11 +133,6 @@ public class ModConfig extends Config {
         @ConfigEditorButton(buttonText = "Open")
         public transient Runnable changelog = () -> openLink("https://github.com/lightre/skybatuhan/releases");
 
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Libraries", desc = "What SkyBatuhan is built on")
-        public LibrariesCategory libraries = new LibrariesCategory();
-
         @ConfigOption(name = "GitHub", desc = "Open the project page")
         @ConfigEditorButton(buttonText = "Open")
         public transient Runnable openGithub = () -> openLink("https://github.com/lightre/skybatuhan");
@@ -145,6 +140,11 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Report a bug", desc = "Open the issue tracker")
         @ConfigEditorButton(buttonText = "Open")
         public transient Runnable openIssues = () -> openLink("https://github.com/lightre/skybatuhan/issues");
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Libraries", desc = "What SkyBatuhan is built on")
+        public LibrariesCategory libraries = new LibrariesCategory();
     }
 
     public static class LibrariesCategory {
