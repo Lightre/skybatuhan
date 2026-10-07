@@ -26,7 +26,7 @@ repositories {
     // Modrinth Maven
     exclusiveContent {
         forRepository {
-            maven {
+            repositories.maven {
                 name = "Modrinth"
                 url = "https://api.modrinth.com/maven"
             }
