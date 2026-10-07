@@ -2,12 +2,14 @@ package com.lightre.skybatuhan.manager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.util.FarmData;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
@@ -28,18 +30,19 @@ public class PointConfigManager {
             if (data == null) data = new FarmData();
             if (data.waypoints == null) data.waypoints = new ArrayList<>();
         } catch (Exception e) {
-            e.printStackTrace();
+            SkyBatuhan.LOGGER.error("Could not load points.json", e);
         }
     }
 
     public static void save() {
         try {
-            if (!CONFIG_DIR.toFile().exists()) CONFIG_DIR.toFile().mkdirs();
+            Files.createDirectories(CONFIG_DIR);
+
             try (FileWriter writer = new FileWriter(POINTS_FILE)) {
                 GSON.toJson(data, writer);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            SkyBatuhan.LOGGER.error("Could not save points.json", e);
         }
     }
 }

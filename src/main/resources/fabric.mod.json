@@ -3,7 +3,7 @@
   "id": "skybatuhan",
   "version": "${version}",
   "name": "SkyBatuhan",
-  "description": "A Skyblock mode that brings randomly generated features into the game.",
+  "description": "A SkyBlock mode that brings randomly generated features into the game.",
   "authors": [
     "Lightre",
     "Peregrints"
@@ -18,6 +18,9 @@
   "entrypoints": {
     "client": [
       "com.lightre.skybatuhan.SkyBatuhan"
+    ],
+    "modmenu": [
+      "com.lightre.skybatuhan.compat.ModMenuIntegration"
     ]
   },
   "mixins": [
@@ -31,5 +34,8 @@
   },
   "suggests": {
     "modmenu": ">=${modmenu_version}"
+  },
+  "custom": {
+    "skybatuhan:moulconfig_version": "${moulconfig_version}"
   }
 }

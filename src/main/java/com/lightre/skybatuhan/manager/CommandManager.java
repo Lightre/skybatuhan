@@ -16,7 +16,7 @@ public class CommandManager {
     private static final String PREFIX = "§6[SkyBatuhan] ";
 
     public static void init() {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> {
             LiteralArgumentBuilder<FabricClientCommandSource> sbh = literal("sbh").executes(CommandManager::mainGui);
 
             sbh.then(literal("reload").executes(CommandManager::reloadConfigs));

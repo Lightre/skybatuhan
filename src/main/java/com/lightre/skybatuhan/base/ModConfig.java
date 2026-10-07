@@ -1,35 +1,47 @@
 package com.lightre.skybatuhan.base;
 
 import com.google.gson.annotations.Expose;
-import com.lightre.skybatuhan.manager.DisconnectNotifier;
+import com.lightre.skybatuhan.SkyBatuhan;
+import com.lightre.skybatuhan.manager.Webhook;
+import com.lightre.skybatuhan.manager.SessionMonitor;
+import com.lightre.skybatuhan.util.ModInfo;
+import com.lightre.skybatuhan.base.enums.FishingOptions.*;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.Social;
 import io.github.notenoughupdates.moulconfig.annotations.*;
-import io.github.notenoughupdates.moulconfig.common.ClickType;
-import io.github.notenoughupdates.moulconfig.common.IMinecraft;
 import io.github.notenoughupdates.moulconfig.common.MyResourceLocation;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
-import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ConfirmLinkScreen;
+import net.fabricmc.loader.api.Version;
+import net.fabricmc.loader.api.VersionParsingException;
+import net.minecraft.client.gui.screens.Screen;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class ModConfig extends Config {
     @Override
     public StructuredText getTitle() {
         checkLatestVersion();
-        String installed = FabricLoader.getInstance()
-                .getModContainer("skybatuhan")
-                .map(c -> c.getMetadata().getVersion().getFriendlyString())
-                .orElse("?");
+        String installed = ModInfo.getVersion();
         String latest = latestVersion;
-        String update = (latest != null && !latest.equals(installed))
+        String update = (latest != null && isNewer(latest, installed))
                 ? " (v" + latest + " available)"
                 : "";
         return StructuredText.of("SkyBatuhan").aqua()
                 .append(StructuredText.of(" v" + installed + " by ").grey())
                 .append(StructuredText.of("Lightre, Peregrints").red())
                 .append(StructuredText.of(update).green());
+    }
+
+    private static boolean isNewer(String latest, String installed) {
+        try {
+            return Version.parse(latest).compareTo(Version.parse(installed)) > 0;
+        } catch (VersionParsingException e) {
+            return false;
+        }
     }
 
     @Override
@@ -48,24 +60,27 @@ public class ModConfig extends Config {
         return list;
     }
 
+    @Override
+    public boolean shouldAutoFocusSearchbar() {
+        return true;
+    }
+
     private static void openLink(String url) {
-        try {
-            String os = System.getProperty("os.name", "").toLowerCase();
-            if (os.contains("win")) {
-                new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url).start();
-            } else if (os.contains("mac")) {
-                new ProcessBuilder("open", url).start();
-            } else {
-                new ProcessBuilder("xdg-open", url).start();
+        Minecraft client = Minecraft.getInstance();
+        Screen previousScreen = client.gui.screen();
+
+        client.execute(() -> client.setScreenAndShow(new ConfirmLinkScreen(confirmed -> {
+            if (confirmed) {
+                try {
+                    net.minecraft.util.Util.getPlatform().openUri(java.net.URI.create(url));
+                } catch (Exception e) {
+                    SkyBatuhan.LOGGER.error("An error occurred while trying to open the link: {}", url, e);
+                }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            IMinecraft.INSTANCE.sendClickableChatMessage(
-                    StructuredText.of("Click here to open the link"),
-                    url,
-                    ClickType.OPEN_LINK
-            );
-        }
+            if (previousScreen != null) {
+                client.setScreenAndShow(previousScreen);
+            }
+        }, url, false)));
     }
 
     private static volatile String latestVersion = null;
@@ -89,7 +104,7 @@ public class ModConfig extends Config {
                     latestVersion = tag.startsWith("v") ? tag.substring(1) : tag;
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                SkyBatuhan.LOGGER.warn("Update check failed", e);
             }
         }, "SkyBatuhan-VersionCheck");
         t.setDaemon(true);
@@ -114,14 +129,9 @@ public class ModConfig extends Config {
 
 
     public static class AboutCategory {
-        @ConfigOption(name = "§a§lv" + com.lightre.skybatuhan.BuildInfo.VERSION, desc = "§7Changelog on GitHub")
+        @ConfigOption(name = "§a§lReleases", desc = "§7Open releases and changelog on GitHub")
         @ConfigEditorButton(buttonText = "Open")
         public transient Runnable changelog = () -> openLink("https://github.com/lightre/skybatuhan/releases");
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Libraries", desc = "What SkyBatuhan is built on")
-        public LibrariesCategory libraries = new LibrariesCategory();
 
         @ConfigOption(name = "GitHub", desc = "Open the project page")
         @ConfigEditorButton(buttonText = "Open")
@@ -130,24 +140,29 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Report a bug", desc = "Open the issue tracker")
         @ConfigEditorButton(buttonText = "Open")
         public transient Runnable openIssues = () -> openLink("https://github.com/lightre/skybatuhan/issues");
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Libraries", desc = "What SkyBatuhan is built on")
+        public LibrariesCategory libraries = new LibrariesCategory();
     }
 
     public static class LibrariesCategory {
-        @ConfigOption(name = "Minecraft", desc = "26.2 (Java 25)")
-        @ConfigEditorInfoText
-        public transient String minecraft = "";
+        @ConfigOption(name = "Minecraft", desc = "Target Minecraft & Java runtime")
+        @ConfigEditorInfoValue
+        public transient String minecraft = "§a" + ModInfo.getMinecraftVersion() + " §7(Java " + ModInfo.getJavaVersion() + ")";
 
-        @ConfigOption(name = "Fabric Loader", desc = "v0.19.5, mod loading")
-        @ConfigEditorInfoText
-        public transient String loader = "";
+        @ConfigOption(name = "Fabric Loader", desc = "Mod loader version")
+        @ConfigEditorInfoValue
+        public transient String loader = "§6v" + ModInfo.getLoaderVersion();
 
-        @ConfigOption(name = "Fabric API", desc = "v0.161.0, events, keybinds and rendering hooks")
-        @ConfigEditorInfoText
-        public transient String fabricApi = "";
+        @ConfigOption(name = "Fabric API", desc = "Events, keybinds and hooks")
+        @ConfigEditorInfoValue
+        public transient String fabricApi = "§ev" + ModInfo.getFabricApiVersion();
 
-        @ConfigOption(name = "MoulConfig", desc = "v4.7.2, this settings menu")
-        @ConfigEditorInfoText
-        public transient String moulConfig = "";
+        @ConfigOption(name = "MoulConfig", desc = "Settings GUI library")
+        @ConfigEditorInfoValue
+        public transient String moulConfig = "§bv" + ModInfo.getMoulConfigVersion();
 
         @ConfigOption(name = "MoulConfig on GitHub", desc = "Open the library page")
         @ConfigEditorButton(buttonText = "Open")
@@ -161,12 +176,12 @@ public class ModConfig extends Config {
     public static class SafetyCategory {
         @Expose
         @ConfigOption(name = "Timeout (ms)", desc = "Safety timeout")
-        @ConfigEditorSlider(minValue = 0f, maxValue = 10000f, minStep = 10f)
+        @ConfigEditorSlider(minValue = 500f, maxValue = 10000f, minStep = 10f)
         public int timeoutMs = 3000;
 
         @Expose
         @ConfigOption(name = "Threshold", desc = "Safety threshold")
-        @ConfigEditorSlider(minValue = 0f, maxValue = 1f, minStep = 0.1f)
+        @ConfigEditorSlider(minValue = 0.1f, maxValue = 1f, minStep = 0.1f)
         public double threshold = 0.1;
     }
 
@@ -195,8 +210,8 @@ public class ModConfig extends Config {
     public static class GeneralSettings {
         @Expose
         @ConfigOption(name = "Point Range", desc = "Waypoint reach range")
-        @ConfigEditorSlider(minValue = 0f, maxValue = 3f, minStep = 0.1f)
-        public double pointRange = 0.1;
+        @ConfigEditorSlider(minValue = 0.1f, maxValue = 3f, minStep = 0.1f)
+        public double pointRange = 0.8;
 
         @Expose
         @ConfigOption(name = "Attack Enabled", desc = "Attack nearby targets while farming")
@@ -217,13 +232,21 @@ public class ModConfig extends Config {
     }
 
     public static class MoveSettings {
-        @Expose @ConfigOption(name = "Forward", desc = "") @ConfigEditorBoolean
+        @Expose
+        @ConfigOption(name = "Forward", desc = "")
+        @ConfigEditorBoolean
         public boolean forward = false;
-        @Expose @ConfigOption(name = "Back", desc = "") @ConfigEditorBoolean
+        @Expose
+        @ConfigOption(name = "Back", desc = "")
+        @ConfigEditorBoolean
         public boolean back = false;
-        @Expose @ConfigOption(name = "Left", desc = "") @ConfigEditorBoolean
+        @Expose
+        @ConfigOption(name = "Left", desc = "")
+        @ConfigEditorBoolean
         public boolean left = false;
-        @Expose @ConfigOption(name = "Right", desc = "") @ConfigEditorBoolean
+        @Expose
+        @ConfigOption(name = "Right", desc = "")
+        @ConfigEditorBoolean
         public boolean right = false;
     }
 
@@ -234,9 +257,9 @@ public class ModConfig extends Config {
         public boolean autoFishEnabled = false;
 
         @Expose
-        @ConfigOption(name = "Fishing Mode", desc = "Vanilla or Skyblock")
-        @ConfigEditorDropdown(values = {"Vanilla", "Skyblock"})
-        public String fishMode = "Vanilla";
+        @ConfigOption(name = "Fishing Mode", desc = "Vanilla or SkyBlock")
+        @ConfigEditorDropdown
+        public FishMode fishMode = FishMode.VANILLA;
 
         @Expose
         @ConfigOption(name = "Jump On Reel", desc = "Jump when reeling in the rod")
@@ -277,8 +300,8 @@ public class ModConfig extends Config {
 
         @Expose
         @ConfigOption(name = "Action Slot", desc = "")
-        @ConfigEditorDropdown(values = {"Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6", "Slot 7", "Slot 8", "Slot 9"})
-        public String actionSlot = "Slot 3";
+        @ConfigEditorDropdown
+        public ActionSlot actionSlot = ActionSlot.SLOT_3;
     }
 
     public static class DisconnectCategory {
@@ -309,7 +332,7 @@ public class ModConfig extends Config {
 
         @ConfigOption(name = "Send Test Message", desc = "Sends a test message to check the webhook")
         @ConfigEditorButton(buttonText = "Send")
-        public transient Runnable sendTest = DisconnectNotifier::sendTest;
+        public transient Runnable sendTest = Webhook::sendTest;
 
         @Expose
         @ConfigOption(name = "Reconnect for Farming", desc = "Leave, wait and rejoin after a disconnect or world change")
@@ -325,9 +348,9 @@ public class ModConfig extends Config {
         public boolean enabled = false;
 
         @Expose
-        @ConfigOption(name = "Server Address", desc = "Server to rejoin")
+        @ConfigOption(name = "Server Address", desc = "Fallback server. The server you were just on is used first")
         @ConfigEditorText
-        public String serverAddress = "eu.hypixel.net";
+        public String serverAddress = "hypixel.net";
 
         @Expose
         @ConfigOption(name = "Trigger On Disconnect", desc = "Start when the server kicks you or the connection drops")
@@ -338,11 +361,6 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Trigger On World Change", desc = "Leave the server when the world changes")
         @ConfigEditorBoolean
         public boolean onWorldChange = true;
-
-        @Expose
-        @ConfigOption(name = "Only While Farming", desc = "Do nothing if Auto Farm is off")
-        @ConfigEditorBoolean
-        public boolean onlyWhenActive = true;
 
         @Expose
         @ConfigOption(name = "Min Wait (s)", desc = "Shortest wait before the first reconnect")
@@ -369,6 +387,10 @@ public class ModConfig extends Config {
         @ConfigEditorSlider(minValue = 5f, maxValue = 240f, minStep = 5f)
         public int attemptWindowMinutes = 60;
 
+        @ConfigOption(name = "Reset Attempts", desc = "Forget past failed attempts and end a pause")
+        @ConfigEditorButton(buttonText = "Reset")
+        public transient Runnable resetAttempts = SessionMonitor::resetAttempts;
+
         @Expose
         @ConfigOption(name = "Settle Min (s)", desc = "Shortest wait after joining and after each command")
         @ConfigEditorSlider(minValue = 3f, maxValue = 60f, minStep = 1f)
@@ -380,7 +402,12 @@ public class ModConfig extends Config {
         public int settleMaxSeconds = 15;
 
         @Expose
-        @ConfigOption(name = "Join Command", desc = "First command after joining")
+        @ConfigOption(name = "Lobby Command", desc = "Sent first when the world changed but you are still connected. Leave empty to skip")
+        @ConfigEditorText
+        public String lobbyCommand = "/lobby";
+
+        @Expose
+        @ConfigOption(name = "Join Command", desc = "Command that enters SkyBlock from the lobby")
         @ConfigEditorText
         public String skyblockCommand = "/skyblock";
 

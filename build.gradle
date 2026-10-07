@@ -1,6 +1,6 @@
 plugins {
     id 'net.fabricmc.fabric-loom' version "${loom_version}"
-    id 'maven-publish'
+    id 'org.jetbrains.kotlin.jvm' version "${kotlin_version}"
 }
 
 version = project.mod_version
@@ -20,12 +20,13 @@ repositories {
         name = "Quilt"
         url = "https://maven.quiltmc.org/repository/release/"
     }
-    maven { url = "https://maven.notenoughupdates.org/releases/"
+    maven {
+        url = "https://maven.notenoughupdates.org/releases/"
     }
     // Modrinth Maven
     exclusiveContent {
         forRepository {
-            maven {
+            repositories.maven {
                 name = "Modrinth"
                 url = "https://api.modrinth.com/maven"
             }
@@ -42,18 +43,17 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-
     // ModMenu
     compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
     runtimeOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
 
-    //MoulConfig
-    implementation "org.notenoughupdates.moulconfig:modern-26.2:4.7.2"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.2.0"
+    // MoulConfig & Kotlin
+    implementation "org.notenoughupdates.moulconfig:modern-${project.minecraft_version}:${project.moulconfig_version}"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:${project.kotlin_version}"
 
     // Jar-in-jar: ship MoulConfig and Kotlin inside the mod jar (the include configuration is not transitive)
-    include "org.notenoughupdates.moulconfig:modern-26.2:4.7.2"
-    include "org.jetbrains.kotlin:kotlin-stdlib:2.2.0"
+    include "org.notenoughupdates.moulconfig:modern-${project.minecraft_version}:${project.moulconfig_version}"
+    include "org.jetbrains.kotlin:kotlin-stdlib:${project.kotlin_version}"
 }
 
 processResources {
@@ -61,12 +61,14 @@ processResources {
     inputs.property "minecraft_version", project.minecraft_version
     inputs.property "loader_version", project.loader_version
     inputs.property "modmenu_version", project.modmenu_version
+    inputs.property "moulconfig_version", project.moulconfig_version
 
     filesMatching("fabric.mod.json") {
         expand "version": inputs.properties.version,
                 "minecraft_version": inputs.properties.minecraft_version,
                 "loader_version": inputs.properties.loader_version,
-                "modmenu_version": project.modmenu_version
+                "modmenu_version": project.modmenu_version,
+                "moulconfig_version": project.moulconfig_version
     }
 }
 
@@ -89,34 +91,3 @@ jar {
         rename { "${it}_${projectName}" }
     }
 }
-
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            artifactId = project.archives_base_name
-            from components.java
-        }
-    }
-}
-
-def buildInfoDir = layout.buildDirectory.dir("generated/sources/buildinfo")
-
-tasks.register("generateBuildInfo") {
-    def outDir = buildInfoDir
-    def ver = project.version.toString()
-    inputs.property("version", ver)
-    outputs.dir(outDir)
-    doLast {
-        def f = outDir.get().file("com/lightre/skybatuhan/BuildInfo.java").asFile
-        f.parentFile.mkdirs()
-        f.text = "package com.lightre.skybatuhan;\n\n" +
-                "public final class BuildInfo {\n" +
-                "    public static final String VERSION = \"${ver}\";\n" +
-                "    private BuildInfo() {}\n" +
-                "}\n"
-    }
-}
-
-sourceSets.main.java.srcDir(buildInfoDir)
-tasks.named("compileJava") { dependsOn("generateBuildInfo") }
-tasks.named("sourcesJar") { dependsOn("generateBuildInfo") }
