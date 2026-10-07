@@ -1,6 +1,7 @@
 package com.lightre.skybatuhan.util;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.metadata.CustomValue;
 
 public final class ModInfo {
     private ModInfo() {}
@@ -22,7 +23,11 @@ public final class ModInfo {
     }
 
     public static String getMoulConfigVersion() {
-        return getModVersion("moulconfig");
+        return FabricLoader.getInstance()
+                .getModContainer("skybatuhan")
+                .map(c -> c.getMetadata().getCustomValue("skybatuhan:moulconfig_version"))
+                .map(CustomValue::getAsString)
+                .orElse("?");
     }
 
     public static String getJavaVersion() {
