@@ -1,5 +1,6 @@
 package com.lightre.skybatuhan.mixin;
 
+import com.lightre.skybatuhan.base.enums.FishingOptions;
 import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.manager.ModuleManager;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -20,7 +21,7 @@ public class FishingHookMixin {
 
     @Inject(method = "onSyncedDataUpdated", at = @At("TAIL"))
     private void onClientTrackedDataChanged(EntityDataAccessor<?> accessor, CallbackInfo ci) {
-        if (ConfigManager.config == null || "Skyblock".equalsIgnoreCase(String.valueOf(ConfigManager.config.fishing.fishMode))) {
+        if (ConfigManager.config == null || ConfigManager.config.fishing.general.fishMode == FishingOptions.FishMode.SKYBLOCK) {
             return;
         }
 
