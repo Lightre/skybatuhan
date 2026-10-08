@@ -22,94 +22,6 @@ import java.util.List;
 
 @SuppressWarnings("unused")
 public class ModConfig extends Config {
-    @Override
-    public StructuredText getTitle() {
-        checkLatestVersion();
-        String installed = ModInfo.getVersion();
-        String latest = latestVersion;
-        String update = (latest != null && isNewer(latest, installed))
-                ? " (v" + latest + " available)"
-                : "";
-        return StructuredText.of("SkyBatuhan").aqua()
-                .append(StructuredText.of(" v" + installed + " by ").grey())
-                .append(StructuredText.of("Lightre, Peregrints").red())
-                .append(StructuredText.of(update).green());
-    }
-
-    private static boolean isNewer(String latest, String installed) {
-        try {
-            return Version.parse(latest).compareTo(Version.parse(installed)) > 0;
-        } catch (VersionParsingException e) {
-            return false;
-        }
-    }
-
-    @Override
-    public boolean isValidRunnable(int runnableId) {
-        return false;
-    }
-
-    @Override
-    public List<Social> getSocials() {
-        List<Social> list = new ArrayList<>();
-        list.add(Social.forLink(
-                StructuredText.of("GitHub"),
-                new MyResourceLocation("skybatuhan", "textures/github.png"),
-                "https://github.com/lightre/skybatuhan"
-        ));
-        return list;
-    }
-
-    @Override
-    public boolean shouldAutoFocusSearchbar() {
-        return true;
-    }
-
-    private static void openLink(String url) {
-        Minecraft client = Minecraft.getInstance();
-        Screen previousScreen = client.gui.screen();
-
-        client.execute(() -> client.setScreenAndShow(new ConfirmLinkScreen(confirmed -> {
-            if (confirmed) {
-                try {
-                    net.minecraft.util.Util.getPlatform().openUri(java.net.URI.create(url));
-                } catch (Exception e) {
-                    SkyBatuhan.LOGGER.error("An error occurred while trying to open the link: {}", url, e);
-                }
-            }
-            if (previousScreen != null) {
-                client.setScreenAndShow(previousScreen);
-            }
-        }, url, false)));
-    }
-
-    private static volatile String latestVersion = null;
-    private static boolean versionCheckStarted = false;
-
-    private static void checkLatestVersion() {
-        if (versionCheckStarted) return;
-        versionCheckStarted = true;
-        Thread t = new Thread(() -> {
-            try {
-                java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
-                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
-                        .uri(java.net.URI.create("https://api.github.com/repos/lightre/skybatuhan/releases/latest"))
-                        .header("Accept", "application/vnd.github+json")
-                        .build();
-                java.net.http.HttpResponse<String> res =
-                        client.send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
-                if (res.statusCode() == 200) {
-                    String tag = com.google.gson.JsonParser.parseString(res.body())
-                            .getAsJsonObject().get("tag_name").getAsString();
-                    latestVersion = tag.startsWith("v") ? tag.substring(1) : tag;
-                }
-            } catch (Exception e) {
-                SkyBatuhan.LOGGER.warn("Update check failed", e);
-            }
-        }, "SkyBatuhan-VersionCheck");
-        t.setDaemon(true);
-        t.start();
-    }
 
     @Expose
     @Category(name = "About", desc = "Info about SkyBatuhan")
@@ -127,6 +39,9 @@ public class ModConfig extends Config {
     @Category(name = "Disconnect", desc = "Discord notifications for disconnects and world changes")
     public DisconnectCategory disconnect = new DisconnectCategory();
 
+    // ==========================================
+    // 1. ABOUT CATEGORY & SUB-CLASSES
+    // ==========================================
 
     public static class AboutCategory {
         @ConfigOption(name = "§a§lReleases", desc = "§7Open releases and changelog on GitHub")
@@ -173,17 +88,9 @@ public class ModConfig extends Config {
         public transient Runnable openFabric = () -> openLink("https://fabricmc.net");
     }
 
-    public static class SafetyCategory {
-        @Expose
-        @ConfigOption(name = "Timeout (ms)", desc = "Safety timeout")
-        @ConfigEditorSlider(minValue = 500f, maxValue = 10000f, minStep = 10f)
-        public int timeoutMs = 3000;
-
-        @Expose
-        @ConfigOption(name = "Threshold", desc = "Safety threshold")
-        @ConfigEditorSlider(minValue = 0.1f, maxValue = 1f, minStep = 0.1f)
-        public double threshold = 0.1;
-    }
+    // ==========================================
+    // 2. FARMING CATEGORY & SUB-CLASSES
+    // ==========================================
 
     public static class FarmingCategory {
         @Expose
@@ -205,50 +112,66 @@ public class ModConfig extends Config {
         @Accordion
         @ConfigOption(name = "Safety Settings", desc = "")
         public SafetyCategory safety = new SafetyCategory();
+
+        public static class GeneralSettings {
+            @Expose
+            @ConfigOption(name = "Point Range", desc = "Waypoint reach range")
+            @ConfigEditorSlider(minValue = 0.1f, maxValue = 3f, minStep = 0.1f)
+            public double pointRange = 0.8;
+
+            @Expose
+            @ConfigOption(name = "Attack Enabled", desc = "Attack nearby targets while farming")
+            @ConfigEditorBoolean
+            public boolean attackEnabled = true;
+        }
+
+        public static class FarmingMovements {
+            @Expose
+            @Accordion
+            @ConfigOption(name = "First Movement", desc = "")
+            public MoveSettings firstMove = new MoveSettings();
+
+            @Expose
+            @Accordion
+            @ConfigOption(name = "Second Movement", desc = "")
+            public MoveSettings secondMove = new MoveSettings();
+        }
+
+        public static class MoveSettings {
+            @Expose
+            @ConfigOption(name = "Forward", desc = "")
+            @ConfigEditorBoolean
+            public boolean forward = false;
+            @Expose
+            @ConfigOption(name = "Back", desc = "")
+            @ConfigEditorBoolean
+            public boolean back = false;
+            @Expose
+            @ConfigOption(name = "Left", desc = "")
+            @ConfigEditorBoolean
+            public boolean left = false;
+            @Expose
+            @ConfigOption(name = "Right", desc = "")
+            @ConfigEditorBoolean
+            public boolean right = false;
+        }
+
+        public static class SafetyCategory {
+            @Expose
+            @ConfigOption(name = "Timeout (ms)", desc = "Safety timeout")
+            @ConfigEditorSlider(minValue = 500f, maxValue = 10000f, minStep = 10f)
+            public int timeoutMs = 3000;
+
+            @Expose
+            @ConfigOption(name = "Threshold", desc = "Safety threshold")
+            @ConfigEditorSlider(minValue = 0.1f, maxValue = 1f, minStep = 0.1f)
+            public double threshold = 0.1;
+        }
     }
 
-    public static class GeneralSettings {
-        @Expose
-        @ConfigOption(name = "Point Range", desc = "Waypoint reach range")
-        @ConfigEditorSlider(minValue = 0.1f, maxValue = 3f, minStep = 0.1f)
-        public double pointRange = 0.8;
-
-        @Expose
-        @ConfigOption(name = "Attack Enabled", desc = "Attack nearby targets while farming")
-        @ConfigEditorBoolean
-        public boolean attackEnabled = true;
-    }
-
-    public static class FarmingMovements {
-        @Expose
-        @Accordion
-        @ConfigOption(name = "First Movement", desc = "")
-        public MoveSettings firstMove = new MoveSettings();
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Second Movement", desc = "")
-        public MoveSettings secondMove = new MoveSettings();
-    }
-
-    public static class MoveSettings {
-        @Expose
-        @ConfigOption(name = "Forward", desc = "")
-        @ConfigEditorBoolean
-        public boolean forward = false;
-        @Expose
-        @ConfigOption(name = "Back", desc = "")
-        @ConfigEditorBoolean
-        public boolean back = false;
-        @Expose
-        @ConfigOption(name = "Left", desc = "")
-        @ConfigEditorBoolean
-        public boolean left = false;
-        @Expose
-        @ConfigOption(name = "Right", desc = "")
-        @ConfigEditorBoolean
-        public boolean right = false;
-    }
+    // ==========================================
+    // 3. FISHING CATEGORY & SUB-CLASSES
+    // ==========================================
 
     public static class FishingCategory {
         @Expose
@@ -257,52 +180,70 @@ public class ModConfig extends Config {
         public boolean autoFishEnabled = false;
 
         @Expose
-        @ConfigOption(name = "Fishing Mode", desc = "Vanilla or SkyBlock")
-        @ConfigEditorDropdown
-        public FishMode fishMode = FishMode.VANILLA;
+        @Accordion
+        @ConfigOption(name = "General Settings", desc = "")
+        public GeneralSettings general = new GeneralSettings();
 
         @Expose
-        @ConfigOption(name = "Jump On Reel", desc = "Jump when reeling in the rod")
-        @ConfigEditorBoolean
-        public boolean reelJump = false;
+        @Accordion
+        @ConfigOption(name = "Safety Settings", desc = "")
+        public SafetyCategory safety = new SafetyCategory();
 
-        @Expose
-        @ConfigOption(name = "Min Reel Delay (ms)", desc = "")
-        @ConfigEditorSlider(minValue = 10f, maxValue = 2000f, minStep = 10f)
-        public double minReelDelay = 400.0;
+        public static class GeneralSettings {
+            @Expose
+            @ConfigOption(name = "Fishing Mode", desc = "Vanilla or SkyBlock")
+            @ConfigEditorDropdown
+            public FishMode fishMode = FishMode.VANILLA;
 
-        @Expose
-        @ConfigOption(name = "Max Reel Delay (ms)", desc = "")
-        @ConfigEditorSlider(minValue = 10f, maxValue = 2000f, minStep = 10f)
-        public double maxReelDelay = 1000.0;
+            @Expose
+            @ConfigOption(name = "Jump On Reel", desc = "Jump when reeling in the rod")
+            @ConfigEditorBoolean
+            public boolean reelJump = false;
 
-        @Expose
-        @ConfigOption(name = "Min Cast Delay (ms)", desc = "")
-        @ConfigEditorSlider(minValue = 200f, maxValue = 2000f, minStep = 10f)
-        public double minCastDelay = 200.0;
+            @Expose
+            @ConfigOption(name = "Enable Action Slot", desc = "")
+            @ConfigEditorBoolean
+            public boolean useActionSlot = false;
 
-        @Expose
-        @ConfigOption(name = "Max Cast Delay (ms)", desc = "")
-        @ConfigEditorSlider(minValue = 200f, maxValue = 2000f, minStep = 10f)
-        public double maxCastDelay = 1000.0;
+            @Expose
+            @ConfigOption(name = "Action Slot", desc = "")
+            @ConfigEditorDropdown
+            public ActionSlot actionSlot = ActionSlot.SLOT_3;
+        }
 
-        @Expose
-        @ConfigOption(name = "AFK Timeout (s)", desc = "")
-        @ConfigEditorSlider(minValue = 5f, maxValue = 180f, minStep = 1f)
-        public double afkTimeoutSeconds = 30.0;
+        public static class SafetyCategory {
+            @Expose
+            @ConfigOption(name = "Min Reel Delay (ms)", desc = "")
+            @ConfigEditorSlider(minValue = 10f, maxValue = 2000f, minStep = 10f)
+            public double minReelDelay = 400.0;
 
-        public static final long MIN_CAST_DELAY_MS = 200;
+            @Expose
+            @ConfigOption(name = "Max Reel Delay (ms)", desc = "")
+            @ConfigEditorSlider(minValue = 10f, maxValue = 2000f, minStep = 10f)
+            public double maxReelDelay = 1000.0;
 
-        @Expose
-        @ConfigOption(name = "Enable Action Slot", desc = "")
-        @ConfigEditorBoolean
-        public boolean useActionSlot = false;
+            @Expose
+            @ConfigOption(name = "Min Cast Delay (ms)", desc = "")
+            @ConfigEditorSlider(minValue = 200f, maxValue = 2000f, minStep = 10f)
+            public double minCastDelay = 200.0;
 
-        @Expose
-        @ConfigOption(name = "Action Slot", desc = "")
-        @ConfigEditorDropdown
-        public ActionSlot actionSlot = ActionSlot.SLOT_3;
+            @Expose
+            @ConfigOption(name = "Max Cast Delay (ms)", desc = "")
+            @ConfigEditorSlider(minValue = 200f, maxValue = 2000f, minStep = 10f)
+            public double maxCastDelay = 1000.0;
+
+            @Expose
+            @ConfigOption(name = "AFK Timeout (s)", desc = "")
+            @ConfigEditorSlider(minValue = 5f, maxValue = 180f, minStep = 1f)
+            public double afkTimeoutSeconds = 30.0;
+
+            public static final long MIN_CAST_DELAY_MS = 200;
+        }
     }
+
+    // ==========================================
+    // 4. DISCONNECT CATEGORY & SUB-CLASSES
+    // ==========================================
 
     public static class DisconnectCategory {
         @Expose
@@ -339,7 +280,6 @@ public class ModConfig extends Config {
         @Accordion
         public ReconnectCategory reconnect = new ReconnectCategory();
     }
-
 
     public static class ReconnectCategory {
         @Expose
@@ -420,5 +360,84 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Resume Auto Farm", desc = "Turn Auto Farm back on at the end (only if it was on before)")
         @ConfigEditorBoolean
         public boolean resumeFarming = true;
+    }
+
+    // ==========================================
+    // UTILITY METHODS (Version Check, Links, etc.)
+    // ==========================================
+
+    @Override
+    public StructuredText getTitle() {
+        checkLatestVersion();
+        String installed = ModInfo.getVersion();
+        String latest = latestVersion;
+        String update = (latest != null && isNewer(latest, installed)) ? " (v" + latest + " available)" : "";
+        return StructuredText.of("SkyBatuhan").aqua().append(StructuredText.of(" v" + installed + " by ").grey()).append(StructuredText.of("Lightre, Peregrints").red()).append(StructuredText.of(update).green());
+    }
+
+    private static boolean isNewer(String latest, String installed) {
+        try {
+            return Version.parse(latest).compareTo(Version.parse(installed)) > 0;
+        } catch (VersionParsingException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean isValidRunnable(int runnableId) {
+        return false;
+    }
+
+    @Override
+    public List<Social> getSocials() {
+        List<Social> list = new ArrayList<>();
+        list.add(Social.forLink(StructuredText.of("GitHub"), new MyResourceLocation("skybatuhan", "textures/github.png"), "https://github.com/lightre/skybatuhan"));
+        return list;
+    }
+
+    @Override
+    public boolean shouldAutoFocusSearchbar() {
+        return true;
+    }
+
+    private static void openLink(String url) {
+        Minecraft client = Minecraft.getInstance();
+        Screen previousScreen = client.gui.screen();
+
+        client.execute(() -> client.setScreenAndShow(new ConfirmLinkScreen(confirmed -> {
+            if (confirmed) {
+                try {
+                    net.minecraft.util.Util.getPlatform().openUri(java.net.URI.create(url));
+                } catch (Exception e) {
+                    SkyBatuhan.LOGGER.error("An error occurred while trying to open the link: {}", url, e);
+                }
+            }
+            if (previousScreen != null) {
+                client.setScreenAndShow(previousScreen);
+            }
+        }, url, false)));
+    }
+
+    private static volatile String latestVersion = null;
+    private static boolean versionCheckStarted = false;
+
+    private static void checkLatestVersion() {
+        if (versionCheckStarted) return;
+        versionCheckStarted = true;
+        Thread t = new Thread(() -> {
+            try {
+                java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder().uri(java.net.URI.create("https://api.github.com/repos/lightre/skybatuhan/releases/latest")).header("Accept", "application/vnd.github+json").build();
+                java.net.http.HttpResponse<String> res = client.send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
+                if (res.statusCode() == 200) {
+                    String tag = com.google.gson.JsonParser.parseString(res.body()).getAsJsonObject().get("tag_name").getAsString();
+                    latestVersion = tag.startsWith("v") ? tag.substring(1) : tag;
+                }
+            } catch (Exception e) {
+                SkyBatuhan.LOGGER.warn("Update check failed", e);
+            }
+        }, "SkyBatuhan-VersionCheck");
+        t.setDaemon(true);
+        t.start();
     }
 }
