@@ -123,6 +123,11 @@ public class ModConfig extends Config {
             @ConfigOption(name = "Attack Enabled", desc = "Attack nearby targets while farming")
             @ConfigEditorBoolean
             public boolean attackEnabled = true;
+
+            @Expose
+            @ConfigOption(name = "Lock Mouse", desc = "Lock the mouse while auto farming")
+            @ConfigEditorBoolean
+            public boolean lockMouse = false;
         }
 
         public static class FarmingMovements {
@@ -209,6 +214,11 @@ public class ModConfig extends Config {
             @ConfigOption(name = "Action Slot", desc = "")
             @ConfigEditorDropdown
             public ActionSlot actionSlot = ActionSlot.SLOT_3;
+
+            @Expose
+            @ConfigOption(name = "Lock Mouse", desc = "Lock the mouse while auto fishing")
+            @ConfigEditorBoolean
+            public boolean lockMouse = false;
         }
 
         public static class SafetyCategory {
