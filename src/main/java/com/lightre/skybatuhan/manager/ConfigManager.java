@@ -44,6 +44,8 @@ public class ConfigManager {
                 config = new ModConfig();
             }
 
+            if (config.about == null) config.about = new ModConfig.AboutCategory();
+
             if (config.farming == null) config.farming = new ModConfig.FarmingCategory();
             if (config.farming.general == null) config.farming.general = new ModConfig.FarmingCategory.GeneralSettings();
             if (config.farming.safety == null) config.farming.safety = new ModConfig.FarmingCategory.SafetyCategory();
