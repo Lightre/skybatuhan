@@ -39,6 +39,10 @@ public class ModConfig extends Config {
     @Category(name = "Disconnect", desc = "Discord notifications for disconnects and world changes")
     public DisconnectCategory disconnect = new DisconnectCategory();
 
+    @Expose
+    @Category(name = "Misc", desc = "Miscellaneous settings")
+    public MiscCategory misc = new MiscCategory();
+
     // ==========================================
     // 1. ABOUT CATEGORY & SUB-CLASSES
     // ==========================================
@@ -370,6 +374,17 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Resume Auto Farm", desc = "Turn Auto Farm back on at the end. (only if it was on before)")
         @ConfigEditorBoolean
         public boolean resumeFarming = true;
+    }
+
+    // ==========================================
+    // 5. MISC CATEGORY & SUB-CLASSES
+    // ==========================================
+
+    public static class MiscCategory {
+        @Expose
+        @ConfigOption(name = "Dark Auction Notifier", desc = "Receive notifications when a dark auction starts.")
+        @ConfigEditorBoolean
+        public boolean darkAuctionNotifier = false;
     }
 
     // ==========================================
