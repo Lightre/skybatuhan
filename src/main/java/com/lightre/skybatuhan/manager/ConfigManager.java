@@ -72,6 +72,8 @@ public class ConfigManager {
             if (config.disconnect == null) config.disconnect = new ModConfig.DisconnectCategory();
             if (config.disconnect.reconnect == null) config.disconnect.reconnect = new ModConfig.ReconnectCategory();
 
+            if (config.misc == null) config.misc = new ModConfig.MiscCategory();
+
             if (!firstLoadDone) {
                 // Features must never start by themselves when the game launches
                 config.farming.autoFarmEnabled = false;
