@@ -29,11 +29,8 @@ public class FishingHookMixin {
         Minecraft client = Minecraft.getInstance();
 
         if (bobber.level() != null && bobber.level().isClientSide()) {
-
             if (DATA_BITING.equals(accessor) && bobber.getEntityData().get(DATA_BITING)) {
-
-                if (client.player != null && bobber.getPlayerOwner() != null &&
-                        bobber.getPlayerOwner().getUUID().equals(client.player.getUUID())) {
+                if (client.player != null && bobber.getPlayerOwner() != null && bobber.getPlayerOwner().getUUID().equals(client.player.getUUID())) {
 
                     ModuleManager.getFishFeature().onFishHooked(client);
                 }
