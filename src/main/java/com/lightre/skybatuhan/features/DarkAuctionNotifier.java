@@ -3,6 +3,7 @@ package com.lightre.skybatuhan.features;
 import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.ModConfig;
 import com.lightre.skybatuhan.manager.ConfigManager;
+import com.lightre.skybatuhan.util.Alerts;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -33,32 +34,11 @@ public class DarkAuctionNotifier {
             if (minute == 54 && epochHour != lastNotifiedAlarmEpochHour) {
                 lastNotifiedAlarmEpochHour = epochHour;
                 client.gui.hud.setTitle(Component.literal("§6Dark Auction!"));
-                playAlarm(client);
+                Alerts.notice(client);
             }
         } catch (Throwable t) {
             SkyBatuhan.LOGGER.error("[SkyBatuhan] DarkAuctionNotifier error", t);
         }
     }
 
-    private static void playAlarm(Minecraft client) {
-        new Thread(() -> {
-            for (int i = 0; i < 15; i++) {
-                if (client.player != null) {
-                    float startPitch = 1.4f;
-                    float step = 0.2f;
-                    float pitch = startPitch + ((i % 3) * step);
-
-                    client.execute(() -> {
-                        if (client.player != null) {
-                            client.player.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 2.0f, pitch);
-                        }
-                    });
-                }
-                try {
-                    Thread.sleep(80);
-                } catch (Exception ignored) {
-                }
-            }
-        }).start();
-    }
 }
