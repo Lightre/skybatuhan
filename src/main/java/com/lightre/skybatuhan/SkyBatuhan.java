@@ -1,10 +1,6 @@
 package com.lightre.skybatuhan;
 
-import com.lightre.skybatuhan.manager.ConfigManager;
-import com.lightre.skybatuhan.manager.PointConfigManager;
-import com.lightre.skybatuhan.manager.ModuleManager;
-import com.lightre.skybatuhan.manager.CommandManager;
-import com.lightre.skybatuhan.manager.SessionMonitor;
+import com.lightre.skybatuhan.manager.*;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import org.slf4j.Logger;

@@ -25,18 +25,15 @@ import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Watches the session, but only reacts while Auto Farm or Auto Fish is on.
- *  - Auto Fish: on a kick or world change, tell Discord and switch it off.
- *  - Auto Farm: on a kick or world change, switch it off, wait, get back to the garden
- *    (reconnect if needed, then /lobby (only when still connected), /skyblock, /warp), resume.
+ * Watches the session but only reacts while Auto Farm or Auto Fish is on.
+ * - Auto Fish: on a kick or world change, tell Discord and switch it off.
+ * - Auto Farm: on a kick or world change, switch it off, wait, get back to the garden
+ * (reconnect if needed, then /lobby (only when still connected), /skyblock, /warp), resume.
  */
 public class SessionMonitor {
     private enum State {
-        IDLE,
-        WAIT_BEFORE,   // random wait, then reconnect or run the commands
-        CONNECTING,
-        RUN_COMMANDS,
-        COOLDOWN       // failed attempt limit reached inside the window
+        IDLE, WAIT_BEFORE,                      // random wait, then reconnect or run the commands
+        CONNECTING, RUN_COMMANDS, COOLDOWN      // failed attempt limit reached inside the window
     }
 
     private static final long QUICK_FAIL_MS = 5 * 60 * 1000L;       // trouble this soon after resuming = failed attempt
@@ -186,8 +183,7 @@ public class SessionMonitor {
 
                 String reason = readScreenText(screen);
                 if (notify.notifyDisconnect) {
-                    Webhook.notifyIfEnabled("**Disconnected** from `" + lastServer + "`:\n" + reason
-                            + (fishOn ? "\nAuto Fish stopped." : ""));
+                    Webhook.notifyIfEnabled("**Disconnected** from `" + lastServer + "`:\n" + reason + (fishOn ? "\nAuto Fish stopped." : ""));
                 }
 
                 if (fishOn) stopFish(client);
@@ -269,8 +265,7 @@ public class SessionMonitor {
         nextActionAt = end;
 
         long minutes = Math.max(1L, (end - now + 59_999L) / 60_000L);
-        report(reason + ". " + cfg.maxAttempts + " failed attempts within " + cfg.attemptWindowMinutes
-                + " min. Paused, trying again in about " + minutes + " min.");
+        report(reason + ". " + cfg.maxAttempts + " failed attempts within " + cfg.attemptWindowMinutes + " min. Paused, trying again in about " + minutes + " min.");
     }
 
     private static void cancelRecovery(String reason) {
@@ -426,7 +421,9 @@ public class SessionMonitor {
         }
     }
 
-    /** Auto Farm stuck right after resuming means we are not where we should be. */
+    /**
+     * Auto Farm stuck right after resuming means we are not where we should be.
+     */
     private static void watchResume(Minecraft client, long now) {
         if (lastResumeAt == 0L) return;
 
@@ -466,8 +463,7 @@ public class SessionMonitor {
 
     private static void startConnect(Minecraft client, ModConfig.ReconnectCategory cfg) {
         // The server we were just on first, the menu address is only a fallback
-        String address = lastAddress != null && !lastAddress.isBlank() ? lastAddress
-                : (cfg.serverAddress == null ? "" : cfg.serverAddress.trim());
+        String address = lastAddress != null && !lastAddress.isBlank() ? lastAddress : (cfg.serverAddress == null ? "" : cfg.serverAddress.trim());
         if (address.isEmpty()) {
             abort("No server address known.");
             return;
@@ -478,8 +474,7 @@ public class SessionMonitor {
         SkyBatuhan.LOGGER.info("[Session] Connecting to {} (attempt {}/{})", address, attemptNumber(), cfg.maxAttempts);
 
         try {
-            ServerData data = lastServerData != null ? lastServerData
-                    : new ServerData("Reconnect", address, ServerData.Type.OTHER);
+            ServerData data = lastServerData != null ? lastServerData : new ServerData("Reconnect", address, ServerData.Type.OTHER);
             ConnectScreen.startConnecting(new TitleScreen(), client, ServerAddress.parseString(address), data, false, null);
         } catch (Exception e) {
             SkyBatuhan.LOGGER.warn("Could not start connecting", e);

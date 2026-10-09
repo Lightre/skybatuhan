@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_25",
   "mixins": [],
   "client": [
-    "FishingHookMixin"
+    "FishingHookMixin",
+    "MouseHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

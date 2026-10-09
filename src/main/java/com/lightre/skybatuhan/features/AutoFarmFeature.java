@@ -24,18 +24,24 @@ public class AutoFarmFeature extends Feature {
     private boolean landing = false;
     private long landingStartedAt = 0L;
 
-    /** Hypixel spawns the player in the air after a world change: sneak until on the ground (max 3 s). */
+    /**
+     * Hypixel sometimes spawns the player in the air after a world change: sneak until on the ground (max 3s).
+     */
     public void startLanding(Minecraft client) {
         landing = true;
         landingStartedAt = System.currentTimeMillis();
     }
 
-    /** time of the last stuck stop (session monitor uses it to spot a failed recovery). */
+    /**
+     * time of the last stuck stop (session monitor uses it to spot a failed recovery).
+     */
     public long getLastStuckStopAt() {
         return lastStuckStopAt;
     }
 
-    /** called before resuming after a recovery: the player is back at the start. */
+    /**
+     * called before resuming after a recovery: the player is back at the start.
+     */
     public void resetDirection() {
         isReversed = false;
         lastTriggeredPoint = null;
@@ -172,11 +178,11 @@ public class AutoFarmFeature extends Feature {
         client.player.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
     }
 
-    private ModConfig.MoveSettings currentMovement() {
+    private ModConfig.FarmingCategory.MoveSettings currentMovement() {
         return isReversed ? ConfigManager.config.farming.farmingMovements.secondMove : ConfigManager.config.farming.farmingMovements.firstMove;
     }
 
-    private boolean hasNoMovement(ModConfig.MoveSettings m) {
+    private boolean hasNoMovement(ModConfig.FarmingCategory.MoveSettings m) {
         return !m.forward && !m.left && !m.back && !m.right;
     }
 

@@ -64,8 +64,7 @@ public class AutoFishFeature extends Feature {
 
     private boolean hasFishingRod(Minecraft client) {
         if (client.player == null) return false;
-        return client.player.getMainHandItem().is(Items.FISHING_ROD) ||
-                client.player.getOffhandItem().is(Items.FISHING_ROD);
+        return client.player.getMainHandItem().is(Items.FISHING_ROD) || client.player.getOffhandItem().is(Items.FISHING_ROD);
     }
 
     public void onFishHooked(Minecraft client) {
@@ -79,17 +78,17 @@ public class AutoFishFeature extends Feature {
 
         ModConfig.FishingCategory fishConfig = ConfigManager.config.fishing;
 
-        long minReel = (long) fishConfig.minReelDelay;
-        long maxReel = (long) fishConfig.maxReelDelay;
-        long minCast = (long) fishConfig.minCastDelay;
-        long maxCast = (long) fishConfig.maxCastDelay;
+        long minReel = (long) fishConfig.safety.minReelDelay;
+        long maxReel = (long) fishConfig.safety.maxReelDelay;
+        long minCast = (long) fishConfig.safety.minCastDelay;
+        long maxCast = (long) fishConfig.safety.maxCastDelay;
 
         long actualMinReel = Math.min(minReel, maxReel);
         long actualMaxReel = Math.max(minReel, maxReel);
         long lowCast = Math.min(minCast, maxCast);
         long highCast = Math.max(minCast, maxCast);
-        long actualMinCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, lowCast);
-        long actualMaxCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, highCast);
+        long actualMinCast = Math.max(ModConfig.FishingCategory.SafetyCategory.MIN_CAST_DELAY_MS, lowCast);
+        long actualMaxCast = Math.max(ModConfig.FishingCategory.SafetyCategory.MIN_CAST_DELAY_MS, highCast);
 
         long reelDelay = ThreadLocalRandom.current().nextLong(actualMinReel, actualMaxReel + 1);
         SkyBatuhan.LOGGER.info("[AutoFish] Reel-in scheduled with menu delay: {}ms", reelDelay);
@@ -101,7 +100,7 @@ public class AutoFishFeature extends Feature {
             if (client.player != null && client.gameMode != null) {
                 client.execute(() -> {
                     if (!this.isEnabled() || gen != generation.get()) return;
-                    if (ConfigManager.config.fishing.reelJump) {
+                    if (ConfigManager.config.fishing.general.reelJump) {
                         startJump(client);
                         SkyBatuhan.LOGGER.info("[AutoFish] Pre-reel jump executed right before pulling!");
                     }
@@ -164,11 +163,11 @@ public class AutoFishFeature extends Feature {
 
     // ================= ACTION SLOT =================
     private boolean shouldUseActionSlot() {
-        return ConfigManager.config.fishing.useActionSlot && ConfigManager.config.fishing.actionSlot != null;
+        return ConfigManager.config.fishing.general.useActionSlot && ConfigManager.config.fishing.general.actionSlot != null;
     }
 
     private void scheduleActionSlot(Minecraft client, InteractionHand finalHand, int gen, long actualMinCast, long actualMaxCast) {
-        int targetSlot = ConfigManager.config.fishing.actionSlot.getHotbarIndex();
+        int targetSlot = ConfigManager.config.fishing.general.actionSlot.getHotbarIndex();
         long switchDelay = ThreadLocalRandom.current().nextLong(ACTION_SLOT_MIN_DELAY_MS, ACTION_SLOT_MAX_DELAY_MS + 1);
 
         threadScheduler.schedule(() -> {
@@ -226,7 +225,7 @@ public class AutoFishFeature extends Feature {
         tickJump(client);
         handleEntityHookRecovery(client);
 
-        FishMode currentMode = ConfigManager.config.fishing.fishMode;
+        FishMode currentMode = ConfigManager.config.fishing.general.fishMode;
 
         // ================= SKYBLOCK MODE =================
         if (currentMode == FishMode.SKYBLOCK && client.player.fishing != null) {
@@ -253,7 +252,7 @@ public class AutoFishFeature extends Feature {
         }
 
         // ================= AFK / LAG TIME OUT PROTECTION =================
-        long timeoutMs = (long) (ConfigManager.config.fishing.afkTimeoutSeconds * 1000);
+        long timeoutMs = (long) (ConfigManager.config.fishing.safety.afkTimeoutSeconds * 1000);
 
         if (lastHookTime > 0 && (System.currentTimeMillis() - lastHookTime > timeoutMs)) {
             client.player.sendSystemMessage(Component.literal("§c§l[WARNING] §fSystem stopped! AFK/Lag safety timeout triggered."));
@@ -318,10 +317,10 @@ public class AutoFishFeature extends Feature {
         SkyBatuhan.LOGGER.info("[AutoFish] Recovered from entity hook");
 
         ModConfig.FishingCategory fishConfig = ConfigManager.config.fishing;
-        long lowCast = Math.min((long) fishConfig.minCastDelay, (long) fishConfig.maxCastDelay);
-        long highCast = Math.max((long) fishConfig.minCastDelay, (long) fishConfig.maxCastDelay);
-        long minCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, lowCast);
-        long maxCast = Math.max(ModConfig.FishingCategory.MIN_CAST_DELAY_MS, highCast);
+        long lowCast = Math.min((long) fishConfig.safety.minCastDelay, (long) fishConfig.safety.maxCastDelay);
+        long highCast = Math.max((long) fishConfig.safety.minCastDelay, (long) fishConfig.safety.maxCastDelay);
+        long minCast = Math.max(ModConfig.FishingCategory.SafetyCategory.MIN_CAST_DELAY_MS, lowCast);
+        long maxCast = Math.max(ModConfig.FishingCategory.SafetyCategory.MIN_CAST_DELAY_MS, highCast);
 
         if (hasNearbyEntities(client)) {
             SkyBatuhan.LOGGER.info("[AutoFish] Entities nearby, waiting before recast...");
