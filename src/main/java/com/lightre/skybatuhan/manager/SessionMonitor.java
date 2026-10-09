@@ -68,6 +68,10 @@ public class SessionMonitor {
 
     public static void init() {
         ClientLevelEvents.AFTER_CLIENT_LEVEL_CHANGE.register((client, _) -> {
+            if (client.level == null) {
+                markLeftGame(client);
+                return;
+            }
 
             ServerData server = client.getCurrentServer();
             boolean multiplayer = server != null;
