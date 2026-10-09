@@ -60,6 +60,15 @@ public class ModConfig extends Config {
         @Accordion
         @ConfigOption(name = "Libraries", desc = "What SkyBatuhan is built on.")
         public LibrariesCategory libraries = new LibrariesCategory();
+
+        @Expose
+        @ConfigOption(name = "Check For Updates", desc = "Look for a new version on GitHub when the game starts.")
+        @ConfigEditorBoolean
+        public boolean checkForUpdates = true;
+
+        @ConfigOption(name = "Check Now", desc = "Look for a new version right now.")
+        @ConfigEditorButton(buttonText = "Check")
+        public transient Runnable checkUpdatesNow = UpdateManager::checkNow;
     }
 
     public static class LibrariesCategory {
