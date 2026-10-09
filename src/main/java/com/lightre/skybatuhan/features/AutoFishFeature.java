@@ -50,16 +50,14 @@ public class AutoFishFeature extends Feature {
     }
 
     @Override
-    public void toggle(Minecraft client) {
-        if (!this.isEnabled()) {
-            if (client.player == null || !hasFishingRod(client)) {
-                if (client.player != null) {
-                    client.player.sendSystemMessage(Component.literal("§c[AutoFish] §fHold a fishing rod to start."));
-                }
-                return;
+    public void setState(Minecraft client, boolean state) {
+        if (state && (client.player == null || !hasFishingRod(client))) {
+            if (client.player != null) {
+                client.player.sendSystemMessage(Component.literal("§c[AutoFish] §fHold a fishing rod to start."));
             }
+            return;
         }
-        super.toggle(client);
+        super.setState(client, state);
     }
 
     private boolean hasFishingRod(Minecraft client) {
