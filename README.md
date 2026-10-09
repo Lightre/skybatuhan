@@ -22,6 +22,7 @@
 - Customizable Auto-Farming and Auto-Fishing feature.
 - Auto-reconnect: rejoins after kicks/world changes, runs join/warp commands, and resumes farming.
 - Discord alerts for disconnects and world changes during farming or fishing.
+- Dark Auction notifier.
 
 ## Prerequisites
 
