@@ -4,6 +4,7 @@ import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.Feature;
 import com.lightre.skybatuhan.features.AutoFarmFeature;
 import com.lightre.skybatuhan.features.AutoFishFeature;
+import com.lightre.skybatuhan.features.DarkAuctionNotifier;
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.notenoughupdates.moulconfig.common.IMinecraft;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -53,6 +54,7 @@ public class ModuleManager {
 
         handleMenu(client);
         bindings.forEach(binding -> binding.sync(client));
+        DarkAuctionNotifier.onTick(client);
 
         for (Feature feature : features) {
             if (wasPressed(feature.getKeyBinding())) feature.toggle(client);
