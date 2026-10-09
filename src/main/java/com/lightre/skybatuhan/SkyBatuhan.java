@@ -17,6 +17,7 @@ public class SkyBatuhan implements ClientModInitializer {
         ModuleManager.init();
         CommandManager.init();
         SessionMonitor.init();
+        UpdateManager.init();
 
         ClientTickEvents.END_CLIENT_TICK.register(ModuleManager::onTick);
     }
