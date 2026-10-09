@@ -4,6 +4,7 @@ import com.google.gson.annotations.Expose;
 import com.lightre.skybatuhan.manager.UpdateManager;
 import com.lightre.skybatuhan.manager.Webhook;
 import com.lightre.skybatuhan.manager.SessionMonitor;
+import com.lightre.skybatuhan.util.Links;
 import com.lightre.skybatuhan.util.ModInfo;
 import com.lightre.skybatuhan.base.enums.FishingOptions.*;
 import io.github.notenoughupdates.moulconfig.Config;
@@ -45,15 +46,15 @@ public class ModConfig extends Config {
     public static class AboutCategory {
         @ConfigOption(name = "§a§lReleases", desc = "§7Open releases and changelog on GitHub.")
         @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable changelog = () -> UpdateManager.openLink("https://github.com/lightre/skybatuhan/releases");
+        public transient Runnable changelog = () -> Links.open(Links.RELEASES);
 
         @ConfigOption(name = "GitHub", desc = "Open the project page.")
         @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable openGithub = () -> UpdateManager.openLink("https://github.com/lightre/skybatuhan");
+        public transient Runnable openGithub = () -> Links.open(Links.GITHUB);
 
         @ConfigOption(name = "Report a bug", desc = "Open the issue tracker.")
         @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable openIssues = () -> UpdateManager.openLink("https://github.com/lightre/skybatuhan/issues");
+        public transient Runnable openIssues = () -> Links.open(Links.ISSUES);
 
         @Expose
         @Accordion
@@ -80,11 +81,11 @@ public class ModConfig extends Config {
 
         @ConfigOption(name = "MoulConfig on GitHub", desc = "Open the library page.")
         @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable openMoulConfig = () -> UpdateManager.openLink("https://github.com/NotEnoughUpdates/MoulConfig");
+        public transient Runnable openMoulConfig = () -> Links.open("https://github.com/NotEnoughUpdates/MoulConfig");
 
         @ConfigOption(name = "Fabric", desc = "Open the Fabric website.")
         @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable openFabric = () -> UpdateManager.openLink("https://fabricmc.net");
+        public transient Runnable openFabric = () -> Links.open("https://fabricmc.net");
     }
 
     // ==========================================
@@ -405,7 +406,7 @@ public class ModConfig extends Config {
     @Override
     public List<Social> getSocials() {
         List<Social> list = new ArrayList<>();
-        list.add(Social.forLink(StructuredText.of("GitHub"), new MyResourceLocation("skybatuhan", "textures/github.png"), "https://github.com/lightre/skybatuhan"));
+        list.add(Social.forLink(StructuredText.of("GitHub"), new MyResourceLocation("skybatuhan", "textures/github.png"), Links.GITHUB));
         return list;
     }
 
