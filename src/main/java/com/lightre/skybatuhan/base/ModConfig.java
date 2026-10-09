@@ -1,7 +1,7 @@
 package com.lightre.skybatuhan.base;
 
 import com.google.gson.annotations.Expose;
-import com.lightre.skybatuhan.SkyBatuhan;
+import com.lightre.skybatuhan.manager.UpdateManager;
 import com.lightre.skybatuhan.manager.Webhook;
 import com.lightre.skybatuhan.manager.SessionMonitor;
 import com.lightre.skybatuhan.util.ModInfo;
@@ -11,11 +11,6 @@ import io.github.notenoughupdates.moulconfig.Social;
 import io.github.notenoughupdates.moulconfig.annotations.*;
 import io.github.notenoughupdates.moulconfig.common.MyResourceLocation;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.ConfirmLinkScreen;
-import net.fabricmc.loader.api.Version;
-import net.fabricmc.loader.api.VersionParsingException;
-import net.minecraft.client.gui.screens.Screen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,15 +45,15 @@ public class ModConfig extends Config {
     public static class AboutCategory {
         @ConfigOption(name = "§a§lReleases", desc = "§7Open releases and changelog on GitHub.")
         @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable changelog = () -> openLink("https://github.com/lightre/skybatuhan/releases");
+        public transient Runnable changelog = () -> UpdateManager.openLink("https://github.com/lightre/skybatuhan/releases");
 
         @ConfigOption(name = "GitHub", desc = "Open the project page.")
         @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable openGithub = () -> openLink("https://github.com/lightre/skybatuhan");
+        public transient Runnable openGithub = () -> UpdateManager.openLink("https://github.com/lightre/skybatuhan");
 
         @ConfigOption(name = "Report a bug", desc = "Open the issue tracker.")
         @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable openIssues = () -> openLink("https://github.com/lightre/skybatuhan/issues");
+        public transient Runnable openIssues = () -> UpdateManager.openLink("https://github.com/lightre/skybatuhan/issues");
 
         @Expose
         @Accordion
@@ -85,11 +80,11 @@ public class ModConfig extends Config {
 
         @ConfigOption(name = "MoulConfig on GitHub", desc = "Open the library page.")
         @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable openMoulConfig = () -> openLink("https://github.com/NotEnoughUpdates/MoulConfig");
+        public transient Runnable openMoulConfig = () -> UpdateManager.openLink("https://github.com/NotEnoughUpdates/MoulConfig");
 
         @ConfigOption(name = "Fabric", desc = "Open the Fabric website.")
         @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable openFabric = () -> openLink("https://fabricmc.net");
+        public transient Runnable openFabric = () -> UpdateManager.openLink("https://fabricmc.net");
     }
 
     // ==========================================
@@ -393,19 +388,13 @@ public class ModConfig extends Config {
 
     @Override
     public StructuredText getTitle() {
-        checkLatestVersion();
         String installed = ModInfo.getVersion();
-        String latest = latestVersion;
-        String update = (latest != null && isNewer(latest, installed)) ? " (v" + latest + " available)" : "";
-        return StructuredText.of("SkyBatuhan").aqua().append(StructuredText.of(" v" + installed + " by ").grey()).append(StructuredText.of("Lightre, Peregrints").red()).append(StructuredText.of(update).green());
-    }
+        StructuredText.Mutable title = StructuredText.of("SkyBatuhan").aqua().append(StructuredText.of(" v" + installed + " by ").grey()).append(StructuredText.of("Lightre, Peregrints").red());
 
-    private static boolean isNewer(String latest, String installed) {
-        try {
-            return Version.parse(latest).compareTo(Version.parse(installed)) > 0;
-        } catch (VersionParsingException e) {
-            return false;
+        if (UpdateManager.isUpdateAvailable()) {
+            title.append(StructuredText.of(" (v" + UpdateManager.getLatestVersion() + " available)").green());
         }
+        return title;
     }
 
     @Override
@@ -423,46 +412,5 @@ public class ModConfig extends Config {
     @Override
     public boolean shouldAutoFocusSearchbar() {
         return true;
-    }
-
-    private static void openLink(String url) {
-        Minecraft client = Minecraft.getInstance();
-        Screen previousScreen = client.gui.screen();
-
-        client.execute(() -> client.setScreenAndShow(new ConfirmLinkScreen(confirmed -> {
-            if (confirmed) {
-                try {
-                    net.minecraft.util.Util.getPlatform().openUri(java.net.URI.create(url));
-                } catch (Exception e) {
-                    SkyBatuhan.LOGGER.error("An error occurred while trying to open the link: {}", url, e);
-                }
-            }
-            if (previousScreen != null) {
-                client.setScreenAndShow(previousScreen);
-            }
-        }, url, false)));
-    }
-
-    private static volatile String latestVersion = null;
-    private static boolean versionCheckStarted = false;
-
-    private static void checkLatestVersion() {
-        if (versionCheckStarted) return;
-        versionCheckStarted = true;
-        Thread t = new Thread(() -> {
-            try {
-                java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
-                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder().uri(java.net.URI.create("https://api.github.com/repos/lightre/skybatuhan/releases/latest")).header("Accept", "application/vnd.github+json").build();
-                java.net.http.HttpResponse<String> res = client.send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
-                if (res.statusCode() == 200) {
-                    String tag = com.google.gson.JsonParser.parseString(res.body()).getAsJsonObject().get("tag_name").getAsString();
-                    latestVersion = tag.startsWith("v") ? tag.substring(1) : tag;
-                }
-            } catch (Exception e) {
-                SkyBatuhan.LOGGER.warn("Update check failed", e);
-            }
-        }, "SkyBatuhan-VersionCheck");
-        t.setDaemon(true);
-        t.start();
     }
 }
