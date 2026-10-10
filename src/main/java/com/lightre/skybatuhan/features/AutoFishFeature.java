@@ -6,12 +6,12 @@ import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.base.ModConfig;
 import com.lightre.skybatuhan.manager.Webhook;
 import com.lightre.skybatuhan.base.enums.FishingOptions.FishMode;
+import com.lightre.skybatuhan.util.Alerts;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Items;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.network.chat.Component;
 
 import java.util.concurrent.Executors;
@@ -50,16 +50,14 @@ public class AutoFishFeature extends Feature {
     }
 
     @Override
-    public void toggle(Minecraft client) {
-        if (!this.isEnabled()) {
-            if (client.player == null || !hasFishingRod(client)) {
-                if (client.player != null) {
-                    client.player.sendSystemMessage(Component.literal("§c[AutoFish] §fHold a fishing rod to start."));
-                }
-                return;
+    public void setState(Minecraft client, boolean state) {
+        if (state && (client.player == null || !hasFishingRod(client))) {
+            if (client.player != null) {
+                client.player.sendSystemMessage(Component.literal("§c[AutoFish] §fHold a fishing rod to start."));
             }
+            return;
         }
-        super.toggle(client);
+        super.setState(client, state);
     }
 
     private boolean hasFishingRod(Minecraft client) {
@@ -258,7 +256,7 @@ public class AutoFishFeature extends Feature {
             client.player.sendSystemMessage(Component.literal("§c§l[WARNING] §fSystem stopped! AFK/Lag safety timeout triggered."));
             Webhook.notifyIfEnabled("**Auto Fish stopped**: AFK/lag timeout.");
 
-            playSafetyAlarm(client);
+            Alerts.warning(client);
             this.toggle(client);
         }
     }
@@ -395,24 +393,5 @@ public class AutoFishFeature extends Feature {
             client.options.keyJump.setDown(false);
         }
         jumpTicksLeft = 0;
-    }
-
-    private void playSafetyAlarm(Minecraft client) {
-        new Thread(() -> {
-            for (int i = 0; i < 15; i++) {
-                if (client.player != null) {
-                    float pitch = 1.0f + ((i % 3) * 0.2f);
-                    client.execute(() -> {
-                        if (client.player != null) {
-                            client.player.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 2.0f, pitch);
-                        }
-                    });
-                }
-                try {
-                    Thread.sleep(80);
-                } catch (Exception ignored) {
-                }
-            }
-        }).start();
     }
 }

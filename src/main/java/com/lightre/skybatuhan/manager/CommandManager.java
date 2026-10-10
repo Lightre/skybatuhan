@@ -5,7 +5,6 @@ import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
-// import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import com.lightre.skybatuhan.SkyBatuhan;
 

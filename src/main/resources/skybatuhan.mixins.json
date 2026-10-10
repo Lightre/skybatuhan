@@ -2,7 +2,6 @@
   "required": true,
   "package": "com.lightre.skybatuhan.mixin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": [],
   "client": [
     "FishingHookMixin",
     "MouseHandlerMixin"

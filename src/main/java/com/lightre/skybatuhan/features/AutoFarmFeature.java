@@ -4,6 +4,7 @@ import com.lightre.skybatuhan.base.Feature;
 import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.manager.PointConfigManager;
 import com.lightre.skybatuhan.base.ModConfig;
+import com.lightre.skybatuhan.util.Alerts;
 import com.lightre.skybatuhan.util.FarmPoint;
 import com.lightre.skybatuhan.manager.Webhook;
 import net.minecraft.client.Minecraft;
@@ -109,7 +110,7 @@ public class AutoFarmFeature extends Feature {
                 alarmTriggered = true;
                 lastStuckStopAt = now;
                 Webhook.notifyIfEnabled("**Auto Farm stopped**: stuck detected.");
-                playAlarm(client);
+                Alerts.warning(client);
                 player.sendSystemMessage(Component.literal("§c§l[WARNING] §fSystem stopped! Stuck was detected."));
                 this.toggle(client);
                 resetMovement(client);
@@ -236,25 +237,6 @@ public class AutoFarmFeature extends Feature {
             resetMovement(client);
             lastLevel = null;
         }
-    }
-
-    private void playAlarm(Minecraft client) {
-        new Thread(() -> {
-            for (int i = 0; i < 15; i++) {
-                if (client.player != null) {
-                    float pitch = 1.0f + ((i % 3) * 0.2f);
-                    client.execute(() -> {
-                        if (client.player != null) {
-                            client.player.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 2.0f, pitch);
-                        }
-                    });
-                }
-                try {
-                    Thread.sleep(80);
-                } catch (Exception ignored) {
-                }
-            }
-        }).start();
     }
 
     public boolean undoLastPoint() {
