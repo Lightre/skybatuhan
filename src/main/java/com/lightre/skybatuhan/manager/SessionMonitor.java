@@ -107,6 +107,10 @@ public class SessionMonitor {
         ClientTickEvents.END_CLIENT_TICK.register(SessionMonitor::onTick);
     }
 
+    public static boolean isRecovering() {
+        return state != State.IDLE;
+    }
+
     // ================= EVENTS =================
 
     private static void markLeftGame(Minecraft client) {

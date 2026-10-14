@@ -1,6 +1,8 @@
 package com.lightre.skybatuhan.manager;
 
 import com.lightre.skybatuhan.SkyBatuhan;
+import com.lightre.skybatuhan.base.Feature;
+import com.lightre.skybatuhan.util.ModInfo;
 import com.lightre.skybatuhan.util.FarmPoint;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -29,23 +31,45 @@ public class CommandManager {
 
             sbh.then(literal("reload").executes(CommandManager::reloadConfigs));
             sbh.then(registerFarmCommands());
+            sbh.then(literal("status").executes(CommandManager::status));
+            sbh.then(registerToggleCommands());
 
             dispatcher.register(sbh);
         });
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> registerFarmCommands() {
-        return literal("farm")
-                .then(literal("list").executes(CommandManager::listFarm))
-                .then(literal("remove").then(argument("id", IntegerArgumentType.integer(1))
-                        .suggests(CommandManager::suggestIds)
-                        .executes(CommandManager::removeFarm)))
-                .then(literal("undo").executes(CommandManager::undoFarm))
-                .then(literal("clear").executes(CommandManager::askClearFarm)
-                        .then(literal("confirm").executes(CommandManager::clearFarm)));
+        return literal("farm").then(literal("list").executes(CommandManager::listFarm)).then(literal("remove").then(argument("id", IntegerArgumentType.integer(1)).suggests(CommandManager::suggestIds).executes(CommandManager::removeFarm))).then(literal("undo").executes(CommandManager::undoFarm)).then(literal("clear").executes(CommandManager::askClearFarm).then(literal("confirm").executes(CommandManager::clearFarm)));
     }
 
     // --- Handlers ---
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> registerToggleCommands() {
+        return literal("toggle").then(literal("farm").executes(_ -> toggle(ModuleManager.getFarmFeature()))).then(literal("fish").executes(_ -> toggle(ModuleManager.getFishFeature())));
+    }
+
+    private static int toggle(Feature feature) {
+        // The feature prints its own "Auto Farm: ON/OFF" message
+        feature.toggle(Minecraft.getInstance());
+        return 1;
+    }
+
+    private static int status(CommandContext<FabricClientCommandSource> context) {
+        var config = ConfigManager.config;
+        var data = PointConfigManager.data;
+
+        sendMessage(context, PREFIX + "§fStatus §7(v" + ModInfo.getVersion() + ")");
+        sendMessage(context, "§7Auto Farm: " + onOff(ModuleManager.getFarmFeature().isEnabled()));
+        sendMessage(context, "§7Auto Fish: " + onOff(ModuleManager.getFishFeature().isEnabled()));
+        sendMessage(context, "§7Points: §f" + data.waypoints.size() + " §7turning, home " + (data.homePoint != null ? "§aset" : "§cnot set"));
+        sendMessage(context, "§7Auto reconnect: " + onOff(config.disconnect.reconnect.enabled) + (SessionMonitor.isRecovering() ? " §e(recovering now)" : ""));
+        sendMessage(context, "§7Discord notifications: " + onOff(config.disconnect.enabled));
+        return 1;
+    }
+
+    private static String onOff(boolean on) {
+        return on ? "§aON" : "§cOFF";
+    }
 
     private static int reloadConfigs(CommandContext<FabricClientCommandSource> context) {
         try {
@@ -70,9 +94,7 @@ public class CommandManager {
         sendMessage(context, PREFIX + "§fTurning points (" + data.waypoints.size() + "):");
         for (int i = 0; i < data.waypoints.size(); i++) {
             int id = i + 1;
-            Component remove = Component.literal(" §c[remove]").withStyle(style -> style
-                    .withClickEvent(new ClickEvent.SuggestCommand("/sbh farm remove " + id))
-                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("Click to type /sbh farm remove " + id))));
+            Component remove = Component.literal(" §c[remove]").withStyle(style -> style.withClickEvent(new ClickEvent.SuggestCommand("/sbh farm remove " + id)).withHoverEvent(new HoverEvent.ShowText(Component.literal("Click to type /sbh farm remove " + id))));
 
             context.getSource().sendFeedback(Component.literal("§e#" + id + " §7" + format(data.waypoints.get(i))).append(remove));
         }
@@ -114,12 +136,9 @@ public class CommandManager {
             return 0;
         }
 
-        Component confirm = Component.literal("§a[Confirm]").withStyle(style -> style
-                .withClickEvent(new ClickEvent.SuggestCommand("/sbh farm clear confirm"))
-                .withHoverEvent(new HoverEvent.ShowText(Component.literal("Click to type /sbh farm clear confirm"))));
+        Component confirm = Component.literal("§a[Confirm]").withStyle(style -> style.withClickEvent(new ClickEvent.SuggestCommand("/sbh farm clear confirm")).withHoverEvent(new HoverEvent.ShowText(Component.literal("Click to type /sbh farm clear confirm"))));
 
-        context.getSource().sendFeedback(Component.literal(PREFIX + "§cThis deletes " + data.waypoints.size()
-                + " turning point(s) and the home point. Type §f/sbh farm clear confirm§c or click ").append(confirm));
+        context.getSource().sendFeedback(Component.literal(PREFIX + "§cThis deletes " + data.waypoints.size() + " turning point(s) and the home point. Type §f/sbh farm clear confirm§c or click ").append(confirm));
         return 1;
     }
 
