@@ -78,15 +78,9 @@ public class AutoFishFeature extends Feature {
 
         long minReel = (long) fishConfig.safety.minReelDelay;
         long maxReel = (long) fishConfig.safety.maxReelDelay;
-        long minCast = (long) fishConfig.safety.minCastDelay;
-        long maxCast = (long) fishConfig.safety.maxCastDelay;
 
         long actualMinReel = Math.min(minReel, maxReel);
         long actualMaxReel = Math.max(minReel, maxReel);
-        long lowCast = Math.min(minCast, maxCast);
-        long highCast = Math.max(minCast, maxCast);
-        long actualMinCast = Math.max(ModConfig.FishingCategory.SafetyCategory.MIN_CAST_DELAY_MS, lowCast);
-        long actualMaxCast = Math.max(ModConfig.FishingCategory.SafetyCategory.MIN_CAST_DELAY_MS, highCast);
 
         long reelDelay = ThreadLocalRandom.current().nextLong(actualMinReel, actualMaxReel + 1);
         SkyBatuhan.LOGGER.info("[AutoFish] Reel-in scheduled with menu delay: {}ms", reelDelay);
@@ -127,17 +121,29 @@ public class AutoFishFeature extends Feature {
                     final InteractionHand finalHand = fishingHand;
 
                     if (shouldUseActionSlot()) {
-                        scheduleActionSlot(client, finalHand, gen, actualMinCast, actualMaxCast);
+                        scheduleActionSlot(client, finalHand, gen);
                     } else {
-                        scheduleRecast(client, finalHand, gen, actualMinCast, actualMaxCast);
+                        scheduleRecast(client, finalHand, gen);
                     }
                 });
             }
         }, reelDelay, TimeUnit.MILLISECONDS);
     }
 
-    private void scheduleRecast(Minecraft client, InteractionHand finalHand, int gen, long actualMinCast, long actualMaxCast) {
-        long castDelay = ThreadLocalRandom.current().nextLong(actualMinCast, actualMaxCast + 1);
+    /**
+     * Random recast delay in ms, never below the enforced minimum.
+     */
+    private long randomCastDelay() {
+        var safety = ConfigManager.config.fishing.safety;
+        long low = Math.min((long) safety.minCastDelay, (long) safety.maxCastDelay);
+        long high = Math.max((long) safety.minCastDelay, (long) safety.maxCastDelay);
+        long min = Math.max(ModConfig.FishingCategory.SafetyCategory.MIN_CAST_DELAY_MS, low);
+        long max = Math.max(ModConfig.FishingCategory.SafetyCategory.MIN_CAST_DELAY_MS, high);
+        return ThreadLocalRandom.current().nextLong(min, max + 1);
+    }
+
+    private void scheduleRecast(Minecraft client, InteractionHand finalHand, int gen) {
+        long castDelay = randomCastDelay();
         SkyBatuhan.LOGGER.info("[AutoFish] Recast scheduled with delay: {}ms", castDelay);
 
         threadScheduler.schedule(() -> {
@@ -164,18 +170,18 @@ public class AutoFishFeature extends Feature {
         return ConfigManager.config.fishing.general.useActionSlot && ConfigManager.config.fishing.general.actionSlot != null;
     }
 
-    private void scheduleActionSlot(Minecraft client, InteractionHand finalHand, int gen, long actualMinCast, long actualMaxCast) {
+    private void scheduleActionSlot(Minecraft client, InteractionHand finalHand, int gen) {
         int targetSlot = ConfigManager.config.fishing.general.actionSlot.getHotbarIndex();
         long switchDelay = ThreadLocalRandom.current().nextLong(ACTION_SLOT_MIN_DELAY_MS, ACTION_SLOT_MAX_DELAY_MS + 1);
 
         threadScheduler.schedule(() -> {
             if (client.player != null && client.gameMode != null) {
-                client.execute(() -> executeActionSlot(client, finalHand, gen, targetSlot, actualMinCast, actualMaxCast));
+                client.execute(() -> executeActionSlot(client, finalHand, gen, targetSlot));
             }
         }, switchDelay, TimeUnit.MILLISECONDS);
     }
 
-    private void executeActionSlot(Minecraft client, InteractionHand finalHand, int gen, int targetSlot, long actualMinCast, long actualMaxCast) {
+    private void executeActionSlot(Minecraft client, InteractionHand finalHand, int gen, int targetSlot) {
         if (!this.isEnabled() || gen != generation.get()) return;
 
         var player = client.player;
@@ -184,7 +190,7 @@ public class AutoFishFeature extends Feature {
 
         int originalSlot = player.getInventory().getSelectedSlot();
         if (targetSlot == originalSlot) {
-            scheduleRecast(client, finalHand, gen, actualMinCast, actualMaxCast);
+            scheduleRecast(client, finalHand, gen);
             return;
         }
         pendingRestoreSlot = originalSlot;
@@ -198,12 +204,12 @@ public class AutoFishFeature extends Feature {
 
         threadScheduler.schedule(() -> {
             if (client.player != null) {
-                client.execute(() -> returnToRodSlot(client, finalHand, gen, originalSlot, actualMinCast, actualMaxCast));
+                client.execute(() -> returnToRodSlot(client, finalHand, gen, originalSlot));
             }
         }, returnDelay, TimeUnit.MILLISECONDS);
     }
 
-    private void returnToRodSlot(Minecraft client, InteractionHand finalHand, int gen, int originalSlot, long actualMinCast, long actualMaxCast) {
+    private void returnToRodSlot(Minecraft client, InteractionHand finalHand, int gen, int originalSlot) {
         var player = client.player;
         if (player == null) return;
 
@@ -213,7 +219,7 @@ public class AutoFishFeature extends Feature {
         if (!this.isEnabled() || gen != generation.get()) return;
 
         SkyBatuhan.LOGGER.info("[AutoFish] Returned to rod slot");
-        scheduleRecast(client, finalHand, gen, actualMinCast, actualMaxCast);
+        scheduleRecast(client, finalHand, gen);
     }
 
     @Override
@@ -279,12 +285,12 @@ public class AutoFishFeature extends Feature {
     }
 
     // ================= ENTITY HOOK RECOVERY =================
-    private boolean isEntityNotHooked(Minecraft client) {
-        return client.player == null || client.player.fishing == null || client.player.fishing.getHookedIn() == null;
+    private boolean isEntityHooked(Minecraft client) {
+        return client.player != null && client.player.fishing != null && client.player.fishing.getHookedIn() != null;
     }
 
     private void handleEntityHookRecovery(Minecraft client) {
-        if (isEntityNotHooked(client)) return;
+        if (isEntityHooked(client)) return;
 
         long now = System.currentTimeMillis();
         if (now - lastEntityHookTime <= ENTITY_HOOK_COOLDOWN_MS) return;
@@ -304,7 +310,7 @@ public class AutoFishFeature extends Feature {
         var gameMode = client.gameMode;
         if (player == null || gameMode == null) return;
 
-        if (isEntityNotHooked(client)) return;
+        if (isEntityHooked(client)) return;
 
         lastEntityHookTime = System.currentTimeMillis();
 
@@ -314,22 +320,16 @@ public class AutoFishFeature extends Feature {
         player.swing(hand);
         SkyBatuhan.LOGGER.info("[AutoFish] Recovered from entity hook");
 
-        ModConfig.FishingCategory fishConfig = ConfigManager.config.fishing;
-        long lowCast = Math.min((long) fishConfig.safety.minCastDelay, (long) fishConfig.safety.maxCastDelay);
-        long highCast = Math.max((long) fishConfig.safety.minCastDelay, (long) fishConfig.safety.maxCastDelay);
-        long minCast = Math.max(ModConfig.FishingCategory.SafetyCategory.MIN_CAST_DELAY_MS, lowCast);
-        long maxCast = Math.max(ModConfig.FishingCategory.SafetyCategory.MIN_CAST_DELAY_MS, highCast);
-
         if (hasNearbyEntities(client)) {
             SkyBatuhan.LOGGER.info("[AutoFish] Entities nearby, waiting before recast...");
             long waitDelay = ThreadLocalRandom.current().nextLong(ENTITY_WAIT_MIN_MS, ENTITY_WAIT_MAX_MS + 1);
             threadScheduler.schedule(() -> client.execute(() -> {
                 if (!this.isEnabled() || gen != generation.get()) return;
-                scheduleRecast(client, hand, gen, minCast, maxCast);
+                scheduleRecast(client, hand, gen);
             }), waitDelay, TimeUnit.MILLISECONDS);
         } else {
             SkyBatuhan.LOGGER.info("[AutoFish] No entities nearby, continuing...");
-            scheduleRecast(client, hand, gen, minCast, maxCast);
+            scheduleRecast(client, hand, gen);
         }
     }
 
