@@ -231,10 +231,25 @@ public class AutoFarmFeature extends Feature {
         }
     }
 
-    public boolean undoLastPoint() {
-        if (PointConfigManager.data.waypoints.isEmpty()) return false;
+    /**
+     * Removes the waypoint with the given 1-based ID. The IDs of the points after it shift down by one.
+     */
+    public FarmPoint removeWaypoint(int id) {
+        var waypoints = PointConfigManager.data.waypoints;
+        if (id < 1 || id > waypoints.size()) return null;
 
-        PointConfigManager.data.waypoints.removeLast();
+        FarmPoint removed = waypoints.remove(id - 1);
+        if (removed == lastTriggeredPoint) lastTriggeredPoint = null;
+        PointConfigManager.save();
+        return removed;
+    }
+
+    public boolean undoLastPoint() {
+        var waypoints = PointConfigManager.data.waypoints;
+        if (waypoints.isEmpty()) return false;
+
+        FarmPoint removed = waypoints.removeLast();
+        if (removed == lastTriggeredPoint) lastTriggeredPoint = null;
         PointConfigManager.save();
         return true;
     }
@@ -242,6 +257,7 @@ public class AutoFarmFeature extends Feature {
     public void clearAll() {
         PointConfigManager.data.waypoints.clear();
         PointConfigManager.data.homePoint = null;
+        lastTriggeredPoint = null;
         PointConfigManager.save();
     }
 }
