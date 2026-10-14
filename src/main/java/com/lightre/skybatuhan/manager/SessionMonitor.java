@@ -308,7 +308,7 @@ public class SessionMonitor {
             var farm = ModuleManager.getFarmFeature();
             farm.resetDirection(); // /warp starts at the farm's beginning
             farm.setState(client, true);
-            farm.startLanding(client);
+            farm.startLanding();
         }
 
         state = State.IDLE;
