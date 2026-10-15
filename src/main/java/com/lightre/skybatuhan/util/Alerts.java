@@ -3,6 +3,7 @@ package com.lightre.skybatuhan.util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -33,6 +34,16 @@ public final class Alerts {
      */
     public static void notice(Minecraft client) {
         alarm(client, SoundEvents.EXPERIENCE_ORB_PICKUP, 1.4f);
+    }
+
+    /**
+     * Flashes the taskbar icon (Dock icon on macOS) when the game window is in the background.
+     */
+    public static void flashTaskbar(Minecraft client) {
+        long window = client.getWindow().handle();
+        if (GLFW.glfwGetWindowAttrib(window, GLFW.GLFW_FOCUSED) == GLFW.GLFW_FALSE) {
+            GLFW.glfwRequestWindowAttention(window);
+        }
     }
 
     private static void alarm(Minecraft client, SoundEvent sound, float startPitch) {

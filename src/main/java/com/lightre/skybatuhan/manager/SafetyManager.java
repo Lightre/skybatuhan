@@ -117,6 +117,7 @@ public final class SafetyManager {
 
         SkyBatuhan.LOGGER.warn("[Safety] {} stopped: {}", who, reason);
         Alerts.warning(client);
+        Alerts.flashTaskbar(client);
 
         if (client.player != null) {
             client.player.sendSystemMessage(Component.literal("§c§l[WARNING] §f" + who + " stopped: " + reason + (leave ? ". Leaving the server soon." : ".")));
