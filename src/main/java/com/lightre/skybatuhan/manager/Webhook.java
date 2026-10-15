@@ -31,7 +31,7 @@ public class Webhook {
     }
 
     public static void notifyIfEnabled(String text, boolean mention) {
-        if (ConfigManager.config.disconnect != null && ConfigManager.config.disconnect.enabled) {
+        if (ConfigManager.config.discord != null && ConfigManager.config.discord.enabled) {
             send(text, mention);
         }
     }
@@ -45,7 +45,7 @@ public class Webhook {
     }
 
     public static void send(String text, boolean mention) {
-        ModConfig.DisconnectCategory cfg = ConfigManager.config.disconnect;
+        ModConfig.DiscordCategory cfg = ConfigManager.config.discord;
 
         String url = cfg.webhookUrl == null ? "" : cfg.webhookUrl.trim();
         if (!WEBHOOK_PATTERN.matcher(url).matches()) {

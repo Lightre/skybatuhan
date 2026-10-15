@@ -35,8 +35,7 @@ public class ConfigManager {
             Files.createDirectories(CONFIG_DIR);
 
             ManagedConfigBuilder<ModConfig> builder = new ManagedConfigBuilder<>(CONFIG_FILE, ModConfig.class);
-            builder.customProcessor(ConfigEditorInfoValue.class, (option, _) ->
-                    new GuiOptionEditorInfoText(option, StructuredText.of(String.valueOf(option.get()))));
+            builder.customProcessor(ConfigEditorInfoValue.class, (option, _) -> new GuiOptionEditorInfoText(option, StructuredText.of(String.valueOf(option.get()))));
             managed = new ManagedConfig<>(builder);
             config = managed.getInstance();
 
@@ -79,10 +78,10 @@ public class ConfigManager {
             config.farming.safety.stopAfterMinutes = Math.clamp(config.farming.safety.stopAfterMinutes, 1, 480);
             config.fishing.safety.stopAfterMinutes = Math.clamp(config.fishing.safety.stopAfterMinutes, 1, 480);
 
-            config.disconnect.heartbeatMinutes = Math.clamp(config.disconnect.heartbeatMinutes, 1, 180);
+            config.discord.heartbeatMinutes = Math.clamp(config.discord.heartbeatMinutes, 1, 180);
 
-            if (config.disconnect == null) config.disconnect = new ModConfig.DisconnectCategory();
-            if (config.disconnect.reconnect == null) config.disconnect.reconnect = new ModConfig.ReconnectCategory();
+            if (config.discord == null) config.discord = new ModConfig.DiscordCategory();
+            if (config.reconnect == null) config.reconnect = new ModConfig.ReconnectCategory();
 
             if (config.misc == null) config.misc = new ModConfig.MiscCategory();
 
@@ -90,6 +89,15 @@ public class ConfigManager {
 
             config.guard.healthPercent = Math.clamp(config.guard.healthPercent, 0, 90);
             config.guard.teleportDistance = Math.max(0, config.guard.teleportDistance);
+
+            if (config.discord == null) config.discord = new ModConfig.DiscordCategory();
+            if (config.reconnect == null) config.reconnect = new ModConfig.ReconnectCategory();
+
+            // Settings saved by older versions lived inside the Discord category
+            if (config.discord.legacyReconnect != null) {
+                config.reconnect = config.discord.legacyReconnect;
+                config.discord.legacyReconnect = null;
+            }
 
             if (!firstLoadDone) {
                 // Features must never start by themselves when the game launches

@@ -1,6 +1,7 @@
 package com.lightre.skybatuhan.base;
 
 import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import com.lightre.skybatuhan.base.enums.FishingOptions.*;
 import com.lightre.skybatuhan.manager.Webhook;
 import com.lightre.skybatuhan.manager.UpdateManager;
@@ -36,8 +37,13 @@ public class ModConfig extends Config {
     public GuardCategory guard = new GuardCategory();
 
     @Expose
-    @Category(name = "Disconnect", desc = "Discord notifications for disconnects and world changes")
-    public DisconnectCategory disconnect = new DisconnectCategory();
+    @Category(name = "Reconnect", desc = "Rejoin and resume Auto Farm after a disconnect or world change")
+    public ReconnectCategory reconnect = new ReconnectCategory();
+
+    @Expose
+    @SerializedName(value = "discord", alternate = {"disconnect"})
+    @Category(name = "Discord", desc = "Discord notifications")
+    public DiscordCategory discord = new DiscordCategory();
 
     @Expose
     @Category(name = "Misc", desc = "Miscellaneous settings")
@@ -73,32 +79,32 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Check Now", desc = "Look for a new version right now.")
         @ConfigEditorButton(buttonText = "Check")
         public transient Runnable checkUpdatesNow = UpdateManager::checkNow;
-    }
 
-    public static class LibrariesCategory {
-        @ConfigOption(name = "Minecraft", desc = "Target Minecraft & Java runtime.")
-        @ConfigEditorInfoValue
-        public transient String minecraft = "§a" + ModInfo.getMinecraftVersion() + " §7(Java " + ModInfo.getJavaVersion() + ")";
+        public static class LibrariesCategory {
+            @ConfigOption(name = "Minecraft", desc = "Target Minecraft & Java runtime.")
+            @ConfigEditorInfoValue
+            public transient String minecraft = "§a" + ModInfo.getMinecraftVersion() + " §7(Java " + ModInfo.getJavaVersion() + ")";
 
-        @ConfigOption(name = "Fabric Loader", desc = "Mod loader version.")
-        @ConfigEditorInfoValue
-        public transient String loader = "§6v" + ModInfo.getLoaderVersion();
+            @ConfigOption(name = "Fabric Loader", desc = "Mod loader version.")
+            @ConfigEditorInfoValue
+            public transient String loader = "§6v" + ModInfo.getLoaderVersion();
 
-        @ConfigOption(name = "Fabric API", desc = "Events, keybinds and hooks.")
-        @ConfigEditorInfoValue
-        public transient String fabricApi = "§ev" + ModInfo.getFabricApiVersion();
+            @ConfigOption(name = "Fabric API", desc = "Events, keybinds and hooks.")
+            @ConfigEditorInfoValue
+            public transient String fabricApi = "§ev" + ModInfo.getFabricApiVersion();
 
-        @ConfigOption(name = "MoulConfig", desc = "Settings GUI library.")
-        @ConfigEditorInfoValue
-        public transient String moulConfig = "§bv" + ModInfo.getMoulConfigVersion();
+            @ConfigOption(name = "MoulConfig", desc = "Settings GUI library.")
+            @ConfigEditorInfoValue
+            public transient String moulConfig = "§bv" + ModInfo.getMoulConfigVersion();
 
-        @ConfigOption(name = "MoulConfig on GitHub", desc = "Open the library page.")
-        @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable openMoulConfig = () -> Links.open("https://github.com/NotEnoughUpdates/MoulConfig");
+            @ConfigOption(name = "MoulConfig on GitHub", desc = "Open the library page.")
+            @ConfigEditorButton(buttonText = "Open")
+            public transient Runnable openMoulConfig = () -> Links.open("https://github.com/NotEnoughUpdates/MoulConfig");
 
-        @ConfigOption(name = "Fabric", desc = "Open the Fabric website.")
-        @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable openFabric = () -> Links.open("https://fabricmc.net");
+            @ConfigOption(name = "Fabric", desc = "Open the Fabric website.")
+            @ConfigEditorButton(buttonText = "Open")
+            public transient Runnable openFabric = () -> Links.open("https://fabricmc.net");
+        }
     }
 
     // ==========================================
@@ -285,7 +291,7 @@ public class ModConfig extends Config {
     }
 
     // ==========================================
-    // SAFETY CATEGORY
+    // 4. SAFETY CATEGORY
     // ==========================================
 
     public static class GuardCategory {
@@ -306,54 +312,8 @@ public class ModConfig extends Config {
     }
 
     // ==========================================
-    // 4. DISCONNECT CATEGORY & SUB-CLASSES
+    // // 5. RECONNECT CATEGORY
     // ==========================================
-
-    public static class DisconnectCategory {
-        @Expose
-        @ConfigOption(name = "Enabled", desc = "Toggle Discord notifications on/off.")
-        @ConfigEditorBoolean
-        public boolean enabled = false;
-
-        @Expose
-        @ConfigOption(name = "Webhook URL", desc = "Discord channel webhook URL. Keep it private.")
-        @ConfigEditorText
-        public String webhookUrl = "";
-
-        @Expose
-        @ConfigOption(name = "Discord User ID", desc = "Your numeric ID, used to ping you.")
-        @ConfigEditorText
-        public String discordUserId = "";
-
-        @Expose
-        @ConfigOption(name = "Notify On Disconnect", desc = "Message when the server kicks you or the connection drops.")
-        @ConfigEditorBoolean
-        public boolean notifyDisconnect = true;
-
-        @Expose
-        @ConfigOption(name = "Notify On World Change", desc = "Message when you move to another world or dimension.")
-        @ConfigEditorBoolean
-        public boolean notifyWorldChange = true;
-
-        @Expose
-        @ConfigOption(name = "Heartbeat", desc = "While Auto Farm or Auto Fish runs, send a quiet \"still running\" message (no ping) at the interval below. If the messages stop coming, the game or your PC probably froze. (default: off)")
-        @ConfigEditorBoolean
-        public boolean heartbeatEnabled = false;
-
-        @Expose
-        @ConfigOption(name = "Heartbeat Interval (min)", desc = "Time between heartbeat messages. (default: 30min)")
-        @ConfigEditorSlider(minValue = 1f, maxValue = 180f, minStep = 1f)
-        public int heartbeatMinutes = 30;
-
-        @ConfigOption(name = "Send Test Message", desc = "Sends a test message to check the webhook.")
-        @ConfigEditorButton(buttonText = "Send")
-        public transient Runnable sendTest = Webhook::sendTest;
-
-        @Expose
-        @ConfigOption(name = "Reconnect for Farming", desc = "Leave, wait and rejoin after a disconnect or world change.")
-        @Accordion
-        public ReconnectCategory reconnect = new ReconnectCategory();
-    }
 
     public static class ReconnectCategory {
         @Expose
@@ -437,7 +397,59 @@ public class ModConfig extends Config {
     }
 
     // ==========================================
-    // 5. MISC CATEGORY & SUB-CLASSES
+    // // 6. DISCORD CATEGORY
+    // ==========================================
+
+    public static class DiscordCategory {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Toggle Discord notifications on/off.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Webhook URL", desc = "Discord channel webhook URL. Keep it private.")
+        @ConfigEditorText
+        public String webhookUrl = "";
+
+        @Expose
+        @ConfigOption(name = "Discord User ID", desc = "Your numeric ID, used to ping you.")
+        @ConfigEditorText
+        public String discordUserId = "";
+
+        @Expose
+        @ConfigOption(name = "Notify On Disconnect", desc = "Message when the server kicks you or the connection drops.")
+        @ConfigEditorBoolean
+        public boolean notifyDisconnect = true;
+
+        @Expose
+        @ConfigOption(name = "Notify On World Change", desc = "Message when you move to another world or dimension.")
+        @ConfigEditorBoolean
+        public boolean notifyWorldChange = true;
+
+        @Expose
+        @ConfigOption(name = "Heartbeat", desc = "While Auto Farm or Auto Fish runs, send a quiet \"still running\" message (no ping) at the interval below. If the messages stop coming, the game or your PC probably froze. (default: off)")
+        @ConfigEditorBoolean
+        public boolean heartbeatEnabled = false;
+
+        @Expose
+        @ConfigOption(name = "Heartbeat Interval (min)", desc = "Time between heartbeat messages. (default: 30min)")
+        @ConfigEditorSlider(minValue = 1f, maxValue = 180f, minStep = 1f)
+        public int heartbeatMinutes = 30;
+
+        @ConfigOption(name = "Send Test Message", desc = "Sends a test message to check the webhook.")
+        @ConfigEditorButton(buttonText = "Send")
+        public transient Runnable sendTest = Webhook::sendTest;
+
+        /**
+         * Older versions saved the reconnect settings here. ConfigManager moves them to ModConfig.reconnect on load.
+         */
+        @Expose
+        @SerializedName("reconnect")
+        public ReconnectCategory legacyReconnect = null;
+    }
+
+    // ==========================================
+    // 7. MISC CATEGORY & SUB-CLASSES
     // ==========================================
 
     public static class MiscCategory {

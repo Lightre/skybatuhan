@@ -13,7 +13,7 @@ public final class Heartbeat {
     }
 
     public static void onTick(Minecraft client) {
-        var discord = ConfigManager.config.disconnect;
+        var discord = ConfigManager.config.discord;
         var farm = ModuleManager.getFarmFeature();
         var fish = ModuleManager.getFishFeature();
 

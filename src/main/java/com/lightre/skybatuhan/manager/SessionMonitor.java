@@ -147,8 +147,8 @@ public class SessionMonitor {
 
         lastWorldChangeAt = now;
 
-        ModConfig.DisconnectCategory notify = ConfigManager.config.disconnect;
-        ModConfig.ReconnectCategory cfg = notify.reconnect;
+        ModConfig.DiscordCategory notify = ConfigManager.config.discord;
+        ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
 
         if (notify.notifyWorldChange) {
             Webhook.notifyIfEnabled("**World changed** on `" + lastServer + "`." + (fishOn ? " Auto Fish stopped." : ""));
@@ -168,8 +168,8 @@ public class SessionMonitor {
     private static void onDisconnectedScreen(Minecraft client, Screen screen) {
         if (screen == lastHandledScreen) return; // Window resize re-inits the same screen
 
-        ModConfig.DisconnectCategory notify = ConfigManager.config.disconnect;
-        ModConfig.ReconnectCategory cfg = notify.reconnect;
+        ModConfig.DiscordCategory notify = ConfigManager.config.discord;
+        ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
         long now = System.currentTimeMillis();
 
         switch (state) {
@@ -223,7 +223,7 @@ public class SessionMonitor {
     // ================= RECOVERY FLOW =================
 
     private static void beginRecovery(Minecraft client, String reason) {
-        ModConfig.ReconnectCategory cfg = ConfigManager.config.disconnect.reconnect;
+        ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
         long now = System.currentTimeMillis();
 
         stopFarm(client);
@@ -249,7 +249,7 @@ public class SessionMonitor {
     }
 
     private static void onAttemptFailed(Minecraft client, String reason, String why) {
-        ModConfig.ReconnectCategory cfg = ConfigManager.config.disconnect.reconnect;
+        ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
         long now = System.currentTimeMillis();
 
         stopFarm(client);
@@ -367,7 +367,7 @@ public class SessionMonitor {
             return;
         }
 
-        ModConfig.ReconnectCategory cfg = ConfigManager.config.disconnect.reconnect;
+        ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
         boolean connected = inGame && client.player != null;
 
         switch (state) {
