@@ -280,12 +280,12 @@ public class AutoFishFeature extends Feature {
     }
 
     // ================= ENTITY HOOK RECOVERY =================
-    private boolean isEntityHooked(Minecraft client) {
-        return client.player != null && client.player.fishing != null && client.player.fishing.getHookedIn() != null;
+    private boolean isEntityNotHooked(Minecraft client) {
+        return client.player == null || client.player.fishing == null || client.player.fishing.getHookedIn() == null;
     }
 
     private void handleEntityHookRecovery(Minecraft client) {
-        if (isEntityHooked(client)) return;
+        if (isEntityNotHooked(client)) return;
 
         long now = System.currentTimeMillis();
         if (now - lastEntityHookTime <= ENTITY_HOOK_COOLDOWN_MS) return;
@@ -305,7 +305,7 @@ public class AutoFishFeature extends Feature {
         var gameMode = client.gameMode;
         if (player == null || gameMode == null) return;
 
-        if (isEntityHooked(client)) return;
+        if (isEntityNotHooked(client)) return;
 
         lastEntityHookTime = System.currentTimeMillis();
 
