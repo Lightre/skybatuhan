@@ -1,21 +1,22 @@
 package com.lightre.skybatuhan.manager;
 
-import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.ModConfig;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.screens.ConnectScreen;
-import net.minecraft.client.gui.screens.DisconnectedScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.ConnectScreen;
+import net.minecraft.client.gui.screens.DisconnectedScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.network.chat.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -31,6 +32,8 @@ import java.util.concurrent.ThreadLocalRandom;
  * (reconnect if needed, then /lobby (only when still connected), /skyblock, /warp), resume.
  */
 public class SessionMonitor {
+    private static final Logger LOG = LoggerFactory.getLogger("SkyBatuhan/Session");
+
     private enum State {
         IDLE, WAIT_BEFORE,                  // random wait, then reconnect or run the commands
         CONNECTING, RUN_COMMANDS, COOLDOWN  // failed attempt limit reached inside the window
@@ -289,7 +292,7 @@ public class SessionMonitor {
         commands.clear();
         failureTimes.clear();
         lastResumeAt = 0L;
-        SkyBatuhan.LOGGER.info("[Session] Recovery cancelled: {}", reason);
+        LOG.info("Recovery cancelled: {}", reason);
     }
 
     public static void resetAttempts() {
@@ -401,7 +404,7 @@ public class SessionMonitor {
                     wantReconnect = false;
                     buildCommands(cfg, false);
                     schedule(State.RUN_COMMANDS, randomMs(cfg.settleMinSeconds, cfg.settleMaxSeconds));
-                    SkyBatuhan.LOGGER.info("[Session] Joined, running commands soon.");
+                    LOG.info("Joined, running commands soon.");
                 } else if (now - connectStartedAt > CONNECT_TIMEOUT_MS) {
                     onAttemptFailed(client, "Connection timed out", null);
                 }
@@ -460,7 +463,7 @@ public class SessionMonitor {
             try {
                 farm.setState(client, false);
             } catch (Exception e) {
-                SkyBatuhan.LOGGER.warn("Could not stop Auto Farm", e);
+                LOG.warn("Could not stop Auto Farm", e);
             }
         }
     }
@@ -471,7 +474,7 @@ public class SessionMonitor {
             try {
                 fish.setState(client, false);
             } catch (Exception e) {
-                SkyBatuhan.LOGGER.warn("Could not stop Auto Fish", e);
+                LOG.warn("Could not stop Auto Fish", e);
             }
         }
     }
@@ -486,13 +489,13 @@ public class SessionMonitor {
 
         connectStartedAt = System.currentTimeMillis();
         state = State.CONNECTING;
-        SkyBatuhan.LOGGER.info("[Session] Connecting to {} (attempt {}/{})", address, attemptNumber(), cfg.maxAttempts);
+        LOG.info("Connecting to {} (attempt {}/{})", address, attemptNumber(), cfg.maxAttempts);
 
         try {
             ServerData data = lastServerData != null ? lastServerData : new ServerData("Reconnect", address, ServerData.Type.OTHER);
             ConnectScreen.startConnecting(new TitleScreen(), client, ServerAddress.parseString(address), data, false, null);
         } catch (Exception e) {
-            SkyBatuhan.LOGGER.warn("Could not start connecting", e);
+            LOG.warn("Could not start connecting", e);
             onAttemptFailed(client, "Could not start connecting", null);
         }
     }
@@ -515,7 +518,7 @@ public class SessionMonitor {
     private static void sendCommand(Minecraft client, String command) {
         if (client.player == null) return;
         client.player.connection.sendCommand(command);
-        SkyBatuhan.LOGGER.info("[Session] Sent command: /{}", command);
+        LOG.info("Sent command: /{}", command);
     }
 
     // ================= HELPERS =================
@@ -548,13 +551,13 @@ public class SessionMonitor {
                 }
             }
         } catch (Exception e) {
-            SkyBatuhan.LOGGER.warn("Could not read the disconnect screen", e);
+            LOG.warn("Could not read the disconnect screen", e);
         }
         return parts.isEmpty() ? "(reason unavailable)" : String.join("\n", parts);
     }
 
     private static void report(String text) {
-        SkyBatuhan.LOGGER.info("[Session] {}", text);
+        LOG.info("{}", text);
         Webhook.notifyIfEnabled("**Reconnect for Farming**: " + text);
     }
 }
