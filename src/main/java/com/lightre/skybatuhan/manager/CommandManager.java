@@ -57,10 +57,12 @@ public class CommandManager {
     private static int status(CommandContext<FabricClientCommandSource> context) {
         var config = ConfigManager.config;
         var data = PointConfigManager.data;
+        var farm = ModuleManager.getFarmFeature();
+        var fish = ModuleManager.getFishFeature();
 
         sendMessage(context, PREFIX + "§fStatus §7(v" + ModInfo.getVersion() + ")");
-        sendMessage(context, "§7Auto Farm: " + onOff(ModuleManager.getFarmFeature().isEnabled()));
-        sendMessage(context, "§7Auto Fish: " + onOff(ModuleManager.getFishFeature().isEnabled()));
+        sendMessage(context, "§7Auto Farm: " + onOff(farm.isEnabled()) + timerInfo(farm, config.farming.safety.stopAfterEnabled, config.farming.safety.stopAfterMinutes));
+        sendMessage(context, "§7Auto Fish: " + onOff(fish.isEnabled()) + timerInfo(fish, config.fishing.safety.stopAfterEnabled, config.fishing.safety.stopAfterMinutes));
         sendMessage(context, "§7Points: §f" + data.waypoints.size() + " §7turning, home " + (data.homePoint != null ? "§aset" : "§cnot set"));
         sendMessage(context, "§7Auto reconnect: " + onOff(config.disconnect.reconnect.enabled) + (SessionMonitor.isRecovering() ? " §e(recovering now)" : ""));
         sendMessage(context, "§7Discord notifications: " + onOff(config.disconnect.enabled));
@@ -69,6 +71,15 @@ public class CommandManager {
 
     private static String onOff(boolean on) {
         return on ? "§aON" : "§cOFF";
+    }
+
+    private static String timerInfo(Feature feature, boolean timerOn, int limitMinutes) {
+        if (!feature.isEnabled()) return "";
+
+        long ranMinutes = feature.getRunTimeMs() / 60_000L;
+        String text = " §7(running " + ranMinutes + " min";
+        if (timerOn) text += ", stops in " + Math.max(0, limitMinutes - ranMinutes) + " min";
+        return text + ")";
     }
 
     private static int reloadConfigs(CommandContext<FabricClientCommandSource> context) {

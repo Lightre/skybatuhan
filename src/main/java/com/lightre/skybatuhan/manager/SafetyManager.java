@@ -33,6 +33,7 @@ public final class SafetyManager {
 
     public static void onTick(Minecraft client) {
         handlePendingLeave(client, System.currentTimeMillis());
+        checkRunLimits(client);
         checkGuards(client);
     }
 
@@ -100,6 +101,8 @@ public final class SafetyManager {
 
         if (farm.isEnabled()) farm.setState(client, false);
         if (fish.isEnabled()) fish.setState(client, false);
+        farm.resetRunTime();
+        fish.resetRunTime();
 
         announce(client, "SkyBatuhan", reason, true);
     }
@@ -111,6 +114,7 @@ public final class SafetyManager {
      */
     public static void autoStop(Minecraft client, Feature feature, String reason, boolean allowLeave) {
         if (feature.isEnabled()) feature.setState(client, false);
+        feature.resetRunTime();
         announce(client, feature.getName(), reason, allowLeave);
     }
 
@@ -163,5 +167,19 @@ public final class SafetyManager {
         leaveAt = 0L;
         leaveReason = "";
         leaveSession = null;
+    }
+
+    private static void checkRunLimits(Minecraft client) {
+        var config = ConfigManager.config;
+
+        checkRunLimit(client, ModuleManager.getFarmFeature(), config.farming.safety.stopAfterEnabled, config.farming.safety.stopAfterMinutes);
+        checkRunLimit(client, ModuleManager.getFishFeature(), config.fishing.safety.stopAfterEnabled, config.fishing.safety.stopAfterMinutes);
+    }
+
+    private static void checkRunLimit(Minecraft client, Feature feature, boolean timerOn, int minutes) {
+        if (!timerOn || minutes <= 0 || !feature.isEnabled()) return;
+        if (feature.getRunTimeMs() < minutes * 60_000L) return;
+
+        autoStop(client, feature, "time limit of " + minutes + " min reached", true);
     }
 }

@@ -176,6 +176,16 @@ public class ModConfig extends Config {
 
         public static class SafetyCategory {
             @Expose
+            @ConfigOption(name = "Auto Stop Timer", desc = "Stop automatically after the time below. Counts only the time the feature is on. (default: off)")
+            @ConfigEditorBoolean
+            public boolean stopAfterEnabled = false;
+
+            @Expose
+            @ConfigOption(name = "Stop After (min)", desc = "How long the feature may run before it stops. (default: 60min)")
+            @ConfigEditorSlider(minValue = 1f, maxValue = 480f, minStep = 1f)
+            public int stopAfterMinutes = 60;
+
+            @Expose
             @ConfigOption(name = "Timeout (ms)", desc = "The time required for the feature to disable and sound an alarm if the player remains stationary. (default: 3000ms)")
             @ConfigEditorSlider(minValue = 500f, maxValue = 10000f, minStep = 10f)
             public int timeoutMs = 3000;
@@ -235,6 +245,16 @@ public class ModConfig extends Config {
         }
 
         public static class SafetyCategory {
+            @Expose
+            @ConfigOption(name = "Auto Stop Timer", desc = "Stop automatically after the time below. Counts only the time the feature is on. (default: off)")
+            @ConfigEditorBoolean
+            public boolean stopAfterEnabled = false;
+
+            @Expose
+            @ConfigOption(name = "Stop After (min)", desc = "How long the feature may run before it stops. (default: 60min)")
+            @ConfigEditorSlider(minValue = 1f, maxValue = 480f, minStep = 1f)
+            public int stopAfterMinutes = 60;
+
             @Expose
             @ConfigOption(name = "Min Reel Delay (ms)", desc = "Minimum random delay before reeling in the rod after a catch to simulate human reaction time. (default: 400ms)")
             @ConfigEditorSlider(minValue = 10f, maxValue = 2000f, minStep = 10f)
