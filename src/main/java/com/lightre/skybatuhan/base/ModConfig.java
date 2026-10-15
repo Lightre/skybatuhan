@@ -1,12 +1,12 @@
 package com.lightre.skybatuhan.base;
 
 import com.google.gson.annotations.Expose;
-import com.lightre.skybatuhan.manager.UpdateManager;
+import com.lightre.skybatuhan.base.enums.FishingOptions.*;
 import com.lightre.skybatuhan.manager.Webhook;
+import com.lightre.skybatuhan.manager.UpdateManager;
 import com.lightre.skybatuhan.manager.SessionMonitor;
 import com.lightre.skybatuhan.util.Links;
 import com.lightre.skybatuhan.util.ModInfo;
-import com.lightre.skybatuhan.base.enums.FishingOptions.*;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.Social;
 import io.github.notenoughupdates.moulconfig.annotations.*;
@@ -334,6 +334,16 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Notify On World Change", desc = "Message when you move to another world or dimension.")
         @ConfigEditorBoolean
         public boolean notifyWorldChange = true;
+
+        @Expose
+        @ConfigOption(name = "Heartbeat", desc = "While Auto Farm or Auto Fish runs, send a quiet \"still running\" message (no ping) at the interval below. If the messages stop coming, the game or your PC probably froze. (default: off)")
+        @ConfigEditorBoolean
+        public boolean heartbeatEnabled = false;
+
+        @Expose
+        @ConfigOption(name = "Heartbeat Interval (min)", desc = "Time between heartbeat messages. (default: 30min)")
+        @ConfigEditorSlider(minValue = 1f, maxValue = 180f, minStep = 1f)
+        public int heartbeatMinutes = 30;
 
         @ConfigOption(name = "Send Test Message", desc = "Sends a test message to check the webhook.")
         @ConfigEditorButton(buttonText = "Send")

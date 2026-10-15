@@ -27,8 +27,12 @@ public class Webhook {
 
     /** sends it only if Discord notifications are turned on in the menu. */
     public static void notifyIfEnabled(String text) {
+        notifyIfEnabled(text, true);
+    }
+
+    public static void notifyIfEnabled(String text, boolean mention) {
         if (ConfigManager.config.disconnect != null && ConfigManager.config.disconnect.enabled) {
-            send(text);
+            send(text, mention);
         }
     }
 
@@ -37,6 +41,10 @@ public class Webhook {
     }
 
     public static void send(String text) {
+        send(text, true);
+    }
+
+    public static void send(String text, boolean mention) {
         ModConfig.DisconnectCategory cfg = ConfigManager.config.disconnect;
 
         String url = cfg.webhookUrl == null ? "" : cfg.webhookUrl.trim();
@@ -46,7 +54,7 @@ public class Webhook {
         }
 
         String id = cfg.discordUserId == null ? "" : cfg.discordUserId.trim();
-        boolean ping = USER_ID_PATTERN.matcher(id).matches();
+        boolean ping = mention && USER_ID_PATTERN.matcher(id).matches();
 
         JsonObject body = getBody(text, ping, id);
 

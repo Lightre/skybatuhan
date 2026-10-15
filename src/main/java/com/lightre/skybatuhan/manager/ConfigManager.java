@@ -2,12 +2,12 @@ package com.lightre.skybatuhan.manager;
 
 import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.ModConfig;
-import com.lightre.skybatuhan.base.ConfigEditorInfoValue;
 import com.lightre.skybatuhan.base.enums.FishingOptions;
+import com.lightre.skybatuhan.base.ConfigEditorInfoValue;
 import io.github.notenoughupdates.moulconfig.managed.ManagedConfig;
+import io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
 import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorInfoText;
-import io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;
@@ -78,6 +78,8 @@ public class ConfigManager {
 
             config.farming.safety.stopAfterMinutes = Math.clamp(config.farming.safety.stopAfterMinutes, 1, 480);
             config.fishing.safety.stopAfterMinutes = Math.clamp(config.fishing.safety.stopAfterMinutes, 1, 480);
+
+            config.disconnect.heartbeatMinutes = Math.clamp(config.disconnect.heartbeatMinutes, 1, 180);
 
             if (config.disconnect == null) config.disconnect = new ModConfig.DisconnectCategory();
             if (config.disconnect.reconnect == null) config.disconnect.reconnect = new ModConfig.ReconnectCategory();

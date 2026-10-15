@@ -8,8 +8,8 @@ import com.lightre.skybatuhan.features.DarkAuctionNotifier;
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.notenoughupdates.moulconfig.common.IMinecraft;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
@@ -55,6 +55,7 @@ public class ModuleManager {
         handleMenu(client);
         bindings.forEach(binding -> binding.sync(client));
         SafetyManager.onTick(client);
+        Heartbeat.onTick(client);
         DarkAuctionNotifier.onTick(client);
 
         for (Feature feature : features) {
