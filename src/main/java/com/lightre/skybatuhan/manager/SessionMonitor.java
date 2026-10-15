@@ -1,6 +1,7 @@
 package com.lightre.skybatuhan.manager;
 
 import com.lightre.skybatuhan.base.ModConfig;
+import com.lightre.skybatuhan.util.Alerts;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -148,7 +149,9 @@ public class SessionMonitor {
         boolean fishOn = ModuleManager.getFishFeature().isEnabled();
         if (!farmOn && !fishOn) return; // Nothing running: not our business
 
+        // onWorldChange: after lastWorldChangeAt = now;
         lastWorldChangeAt = now;
+        flash();
 
         ModConfig.DiscordCategory notify = ConfigManager.config.discord;
         ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
@@ -197,7 +200,9 @@ public class SessionMonitor {
                 boolean fishOn = ModuleManager.getFishFeature().isEnabled() || fishOnAtLeave;
                 farmOnAtLeave = false;
                 fishOnAtLeave = false;
+                // onDisconnectedScreen, case IDLE: right after the "nothing running" check
                 if (!farmOn && !fishOn) return; // Nothing running: not our business
+                flash();
 
                 String reason = readScreenText(screen);
                 if (notify.notifyDisconnect) {
@@ -276,7 +281,9 @@ public class SessionMonitor {
         report(reason + ". Retrying in " + waitMs / 1000 + "s (attempt " + attemptNumber() + "/" + cfg.maxAttempts + ").");
     }
 
+    // enterCooldown: first line of the method
     private static void enterCooldown(String reason, ModConfig.ReconnectCategory cfg, long now) {
+        flash();
         Long firstFailure = failureTimes.peekFirst();
         long end = (firstFailure != null ? firstFailure : now) + windowMs(cfg);
         state = State.COOLDOWN;
@@ -306,7 +313,9 @@ public class SessionMonitor {
         }
     }
 
+    // abort: first line of the method
     private static void abort(String reason) {
+        flash();
         state = State.IDLE;
         wantReconnect = false;
         commands.clear();
@@ -554,6 +563,10 @@ public class SessionMonitor {
             LOG.warn("Could not read the disconnect screen", e);
         }
         return parts.isEmpty() ? "(reason unavailable)" : String.join("\n", parts);
+    }
+
+    private static void flash() {
+        Alerts.flashTaskbar(Minecraft.getInstance());
     }
 
     private static void report(String text) {
