@@ -4,10 +4,13 @@ import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.Feature;
 import com.lightre.skybatuhan.util.Alerts;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.Locale;
 
 /**
  * Every automatic stop (stuck, AFK timeout, ...) goes through here: alarm, chat, Discord
@@ -16,16 +19,87 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class SafetyManager {
     private static final long LEAVE_MIN_MS = 2000L;
     private static final long LEAVE_MAX_MS = 5000L;
+    private static final long HOME_TELEPORT_GRACE_MS = 5000L;
 
     private static long leaveAt = 0L;
     private static String leaveReason = "";
     private static ClientPacketListener leaveSession = null; // the connection we planned to leave
+    private static Vec3 lastPos = null;
+    private static ClientLevel lastLevel = null;
 
     private SafetyManager() {
     }
 
     public static void onTick(Minecraft client) {
         handlePendingLeave(client, System.currentTimeMillis());
+        checkGuards(client);
+    }
+
+    private static void checkGuards(Minecraft client) {
+        var farm = ModuleManager.getFarmFeature();
+        var fish = ModuleManager.getFishFeature();
+
+        // Nothing is running: nothing to protect, and the next start must begin fresh
+        if (!farm.isEnabled() && !fish.isEnabled()) {
+            lastPos = null;
+            lastLevel = null;
+            return;
+        }
+
+        var player = client.player;
+        if (player == null || client.level == null) return;
+
+        var cfg = ConfigManager.config.guard;
+
+        if (player.isDeadOrDying()) {
+            trigger(client, "you died");
+            return;
+        }
+
+        if (cfg.healthPercent > 0) {
+            float max = player.getMaxHealth();
+            if (max > 0f) {
+                float percent = player.getHealth() / max * 100f;
+                if (percent < cfg.healthPercent) {
+                    trigger(client, String.format(Locale.ROOT, "health is at %.0f%% (limit %d%%)", percent, cfg.healthPercent));
+                    return;
+                }
+            }
+        }
+
+        Vec3 pos = new Vec3(player.getX(), player.getY(), player.getZ());
+
+        if (client.level != lastLevel) {
+            // New world: the position jump belongs to the world change, the session monitor handles that
+            lastLevel = client.level;
+            lastPos = pos;
+            return;
+        }
+
+        Vec3 previous = lastPos;
+        lastPos = pos;
+
+        if (cfg.teleportDistance > 0 && previous != null) {
+            double moved = pos.distanceTo(previous);
+            boolean ownHome = System.currentTimeMillis() - farm.getLastHomeCommandAt() < HOME_TELEPORT_GRACE_MS;
+
+            if (moved > cfg.teleportDistance && !ownHome) {
+                trigger(client, String.format(Locale.ROOT, "you were moved %.0f blocks in one tick", moved));
+            }
+        }
+    }
+
+    /**
+     * A guard rule fired: stop both features and handle it like any other automatic stop.
+     */
+    private static void trigger(Minecraft client, String reason) {
+        var farm = ModuleManager.getFarmFeature();
+        var fish = ModuleManager.getFishFeature();
+
+        if (farm.isEnabled()) farm.setState(client, false);
+        if (fish.isEnabled()) fish.setState(client, false);
+
+        announce(client, "SkyBatuhan", reason, true);
     }
 
     /**

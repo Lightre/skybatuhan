@@ -78,6 +78,9 @@ public class ConfigManager {
 
             if (config.guard == null) config.guard = new ModConfig.GuardCategory();
 
+            config.guard.healthPercent = Math.clamp(config.guard.healthPercent, 0, 90);
+            config.guard.teleportDistance = Math.max(0, config.guard.teleportDistance);
+
             if (!firstLoadDone) {
                 // Features must never start by themselves when the game launches
                 config.farming.autoFarmEnabled = false;

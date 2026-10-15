@@ -270,6 +270,16 @@ public class ModConfig extends Config {
 
     public static class GuardCategory {
         @Expose
+        @ConfigOption(name = "Low Health Limit (%)", desc = "Stop when your health falls below this percent. 0 turns it off. Dying always stops. (default: 10%)")
+        @ConfigEditorSlider(minValue = 0f, maxValue = 90f, minStep = 5f)
+        public int healthPercent = 10;
+
+        @Expose
+        @ConfigOption(name = "Teleport Distance (blocks)", desc = "Stop when you are moved this far in a single tick. 0 turns it off. Auto Farm's own /home is ignored. Raise it if your Auto Fish action slot item teleports. (default: 10)")
+        @ConfigEditorSlider(minValue = 0f, maxValue = 50f, minStep = 1f)
+        public int teleportDistance = 10;
+
+        @Expose
         @ConfigOption(name = "Leave Server On Stop", desc = "After any automatic stop (stuck, AFK timeout, low health, death, teleport) wait a few seconds and leave the server. Stopping by hand never leaves. (default: off)")
         @ConfigEditorBoolean
         public boolean leaveOnStop = false;

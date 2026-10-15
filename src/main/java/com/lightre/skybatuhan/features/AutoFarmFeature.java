@@ -19,6 +19,7 @@ public class AutoFarmFeature extends Feature {
     private long lastMovementTime = 0;
     private long lastWaypointTime = 0;
     private volatile long lastStuckStopAt = 0L;
+    private volatile long lastHomeCommandAt = 0L;
     private boolean keysHeld = false;
     private ClientLevel lastLevel = null;
     private boolean landing = false;
@@ -33,6 +34,13 @@ public class AutoFarmFeature extends Feature {
      */
     public long getLastStuckStopAt() {
         return lastStuckStopAt;
+    }
+
+    /**
+     * Time of the last /home sent by Auto Farm (the safety guard ignores that teleport).
+     */
+    public long getLastHomeCommandAt() {
+        return lastHomeCommandAt;
     }
 
     /**
@@ -134,6 +142,7 @@ public class AutoFarmFeature extends Feature {
             if (!homeCommandDone) {
                 if (client.getConnection() != null) {
                     client.getConnection().sendCommand("home");
+                    lastHomeCommandAt = System.currentTimeMillis();
                 }
                 homeCommandDone = true;
                 isReversed = false;
