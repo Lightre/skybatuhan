@@ -526,9 +526,12 @@ public class SessionMonitor {
     }
 
     private static long randomMs(int minSeconds, int maxSeconds) {
-        int lo = Math.max(1, Math.min(minSeconds, maxSeconds));
-        int hi = Math.max(1, Math.max(minSeconds, maxSeconds));
-        return ThreadLocalRandom.current().nextLong(lo * 1000L, hi * 1000L + 1);
+        int lowest = Math.min(minSeconds, maxSeconds);
+        int highest = Math.max(minSeconds, maxSeconds);
+
+        long lowMs = Math.max(1, lowest) * 1000L;
+        long highMs = Math.max(1, highest) * 1000L;
+        return ThreadLocalRandom.current().nextLong(lowMs, highMs + 1);
     }
 
     private static boolean isBan(String text) {
