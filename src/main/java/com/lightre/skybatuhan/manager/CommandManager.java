@@ -32,6 +32,7 @@ public class CommandManager {
             sbh.then(literal("reload").executes(CommandManager::reloadConfigs));
             sbh.then(registerFarmCommands());
             sbh.then(literal("status").executes(CommandManager::status));
+            sbh.then(literal("help").executes(CommandManager::help));
             sbh.then(registerToggleCommands());
 
             dispatcher.register(sbh);
@@ -67,6 +68,23 @@ public class CommandManager {
         sendMessage(context, "§7Auto reconnect: " + onOff(config.reconnect.enabled) + (SessionMonitor.isRecovering() ? " §e(recovering now)" : ""));
         sendMessage(context, "§7Discord notifications: " + onOff(config.discord.enabled));
         return 1;
+    }
+
+    private static int help(CommandContext<FabricClientCommandSource> context) {
+        sendMessage(context, PREFIX + "§fCommands:");
+        sendHelpLine(context, "/sbh", "Open the settings menu");
+        sendHelpLine(context, "/sbh status", "Show what is running and the saved points");
+        sendHelpLine(context, "/sbh toggle <farm|fish>", "Turn Auto Farm or Auto Fish on or off");
+        sendHelpLine(context, "/sbh farm list", "List the turning points (click one to remove it)");
+        sendHelpLine(context, "/sbh farm remove <id>", "Remove a turning point");
+        sendHelpLine(context, "/sbh farm undo", "Remove the last turning point");
+        sendHelpLine(context, "/sbh farm clear", "Delete all points (asks to confirm first)");
+        sendHelpLine(context, "/sbh reload", "Reload the config files");
+        return 1;
+    }
+
+    private static void sendHelpLine(CommandContext<FabricClientCommandSource> context, String command, String description) {
+        sendMessage(context, "§e" + command + " §7- " + description);
     }
 
     private static String onOff(boolean on) {
