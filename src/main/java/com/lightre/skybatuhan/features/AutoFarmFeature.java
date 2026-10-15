@@ -1,55 +1,62 @@
 package com.lightre.skybatuhan.features;
 
 import com.lightre.skybatuhan.base.Feature;
-import com.lightre.skybatuhan.manager.ConfigManager;
-import com.lightre.skybatuhan.manager.PointConfigManager;
 import com.lightre.skybatuhan.base.ModConfig;
-import com.lightre.skybatuhan.util.Alerts;
+import com.lightre.skybatuhan.manager.*;
 import com.lightre.skybatuhan.util.FarmPoint;
-import com.lightre.skybatuhan.manager.Webhook;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 
 public class AutoFarmFeature extends Feature {
+    private static final long LANDING_MAX_MS = 3000L;
+
     private boolean isReversed = false, homeCommandDone = false, alarmTriggered = false;
     private FarmPoint lastTriggeredPoint = null;
     private Vec3 lastPos = Vec3.ZERO;
     private long lastMovementTime = 0;
     private long lastWaypointTime = 0;
     private volatile long lastStuckStopAt = 0L;
+    private volatile long lastHomeCommandAt = 0L;
     private boolean keysHeld = false;
-    private Object lastLevel = null;
-    private static final long LANDING_MAX_MS = 3000L;
+    private ClientLevel lastLevel = null;
     private boolean landing = false;
     private long landingStartedAt = 0L;
 
-    /**
-     * Hypixel sometimes spawns the player in the air after a world change: sneak until on the ground (max 3s).
-     */
-    public void startLanding(Minecraft client) {
-        landing = true;
-        landingStartedAt = System.currentTimeMillis();
+    public AutoFarmFeature() {
+        super("Auto Farm");
     }
 
     /**
-     * time of the last stuck stop (session monitor uses it to spot a failed recovery).
+     * Time of the last stuck stop (the session monitor uses it to spot a failed recovery).
      */
     public long getLastStuckStopAt() {
         return lastStuckStopAt;
     }
 
     /**
-     * called before resuming after a recovery: the player is back at the start.
+     * Time of the last /home sent by Auto Farm (the safety guard ignores that teleport).
+     */
+    public long getLastHomeCommandAt() {
+        return lastHomeCommandAt;
+    }
+
+    /**
+     * Called before resuming after a recovery: the player is back at the start.
      */
     public void resetDirection() {
         isReversed = false;
         lastTriggeredPoint = null;
     }
 
-    public AutoFarmFeature() {
-        super("Auto Farm");
+    /**
+     * Hypixel sometimes spawns the player in the air after a world change: sneak until on the ground (max 3s).
+     */
+    public void startLanding() {
+        landing = true;
+        landingStartedAt = System.currentTimeMillis();
     }
 
     @Override
@@ -60,7 +67,6 @@ public class AutoFarmFeature extends Feature {
         long now = System.currentTimeMillis();
         Vec3 currentPos = new Vec3(client.player.getX(), client.player.getY(), client.player.getZ());
 
-        // New level (rejoined, world change): restart the stuck detection from scratch
         if (client.level != lastLevel) {
             lastLevel = client.level;
             lastPos = currentPos;
@@ -91,8 +97,7 @@ public class AutoFarmFeature extends Feature {
     }
 
     private void handleSafety(Minecraft client, Vec3 currentPos, long now) {
-        var player = client.player;
-        if (player == null) return;
+        if (client.player == null) return;
 
         if (hasNoMovement(currentMovement())) {
             lastMovementTime = now;
@@ -105,16 +110,10 @@ public class AutoFarmFeature extends Feature {
             lastPos = currentPos;
         }
 
-        if (now - lastMovementTime > ConfigManager.config.farming.safety.timeoutMs) {
-            if (!alarmTriggered) {
-                alarmTriggered = true;
-                lastStuckStopAt = now;
-                Webhook.notifyIfEnabled("**Auto Farm stopped**: stuck detected.");
-                Alerts.warning(client);
-                player.sendSystemMessage(Component.literal("§c§l[WARNING] §fSystem stopped! Stuck was detected."));
-                this.toggle(client);
-                resetMovement(client);
-            }
+        if (now - lastMovementTime > ConfigManager.config.farming.safety.timeoutMs && !alarmTriggered) {
+            alarmTriggered = true;
+            lastStuckStopAt = now;
+            SafetyManager.autoStop(client, this, "stuck detected", !SessionMonitor.isWatchingResume());
         }
     }
 
@@ -143,6 +142,7 @@ public class AutoFarmFeature extends Feature {
             if (!homeCommandDone) {
                 if (client.getConnection() != null) {
                     client.getConnection().sendCommand("home");
+                    lastHomeCommandAt = System.currentTimeMillis();
                 }
                 homeCommandDone = true;
                 isReversed = false;
@@ -195,13 +195,6 @@ public class AutoFarmFeature extends Feature {
             return;
         }
 
-        boolean anyMovementEnabled = movement.forward || movement.left || movement.back || movement.right;
-
-        if (!anyMovementEnabled) {
-            if (keysHeld) resetMovement(client);
-            return;
-        }
-
         client.options.keyAttack.setDown(ConfigManager.config.farming.general.attackEnabled);
 
         client.options.keyUp.setDown(movement.forward);
@@ -239,10 +232,25 @@ public class AutoFarmFeature extends Feature {
         }
     }
 
-    public boolean undoLastPoint() {
-        if (PointConfigManager.data.waypoints.isEmpty()) return false;
+    /**
+     * Removes the waypoint with the given 1-based ID. The IDs of the points after it shift down by one.
+     */
+    public FarmPoint removeWaypoint(int id) {
+        var waypoints = PointConfigManager.data.waypoints;
+        if (id < 1 || id > waypoints.size()) return null;
 
-        PointConfigManager.data.waypoints.removeLast();
+        FarmPoint removed = waypoints.remove(id - 1);
+        if (removed == lastTriggeredPoint) lastTriggeredPoint = null;
+        PointConfigManager.save();
+        return removed;
+    }
+
+    public boolean undoLastPoint() {
+        var waypoints = PointConfigManager.data.waypoints;
+        if (waypoints.isEmpty()) return false;
+
+        FarmPoint removed = waypoints.removeLast();
+        if (removed == lastTriggeredPoint) lastTriggeredPoint = null;
         PointConfigManager.save();
         return true;
     }
@@ -250,6 +258,7 @@ public class AutoFarmFeature extends Feature {
     public void clearAll() {
         PointConfigManager.data.waypoints.clear();
         PointConfigManager.data.homePoint = null;
+        lastTriggeredPoint = null;
         PointConfigManager.save();
     }
 }

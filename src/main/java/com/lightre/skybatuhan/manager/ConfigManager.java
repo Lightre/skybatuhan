@@ -2,12 +2,12 @@ package com.lightre.skybatuhan.manager;
 
 import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.ModConfig;
-import com.lightre.skybatuhan.base.ConfigEditorInfoValue;
 import com.lightre.skybatuhan.base.enums.FishingOptions;
+import com.lightre.skybatuhan.base.ConfigEditorInfoValue;
 import io.github.notenoughupdates.moulconfig.managed.ManagedConfig;
+import io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
 import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorInfoText;
-import io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;
@@ -35,8 +35,7 @@ public class ConfigManager {
             Files.createDirectories(CONFIG_DIR);
 
             ManagedConfigBuilder<ModConfig> builder = new ManagedConfigBuilder<>(CONFIG_FILE, ModConfig.class);
-            builder.customProcessor(ConfigEditorInfoValue.class, (option, _) ->
-                    new GuiOptionEditorInfoText(option, StructuredText.of(String.valueOf(option.get()))));
+            builder.customProcessor(ConfigEditorInfoValue.class, (option, _) -> new GuiOptionEditorInfoText(option, StructuredText.of(String.valueOf(option.get()))));
             managed = new ManagedConfig<>(builder);
             config = managed.getInstance();
 
@@ -47,9 +46,11 @@ public class ConfigManager {
             if (config.about == null) config.about = new ModConfig.AboutCategory();
 
             if (config.farming == null) config.farming = new ModConfig.FarmingCategory();
-            if (config.farming.general == null) config.farming.general = new ModConfig.FarmingCategory.GeneralSettings();
+            if (config.farming.general == null)
+                config.farming.general = new ModConfig.FarmingCategory.GeneralSettings();
             if (config.farming.safety == null) config.farming.safety = new ModConfig.FarmingCategory.SafetyCategory();
-            if (config.farming.farmingMovements == null) config.farming.farmingMovements = new ModConfig.FarmingCategory.FarmingMovements();
+            if (config.farming.farmingMovements == null)
+                config.farming.farmingMovements = new ModConfig.FarmingCategory.FarmingMovements();
 
             if (config.farming.farmingMovements.firstMove == null)
                 config.farming.farmingMovements.firstMove = new ModConfig.FarmingCategory.MoveSettings();
@@ -58,11 +59,14 @@ public class ConfigManager {
                 config.farming.farmingMovements.secondMove = new ModConfig.FarmingCategory.MoveSettings();
 
             if (config.fishing == null) config.fishing = new ModConfig.FishingCategory();
-            if (config.fishing.general == null) config.fishing.general = new ModConfig.FishingCategory.GeneralSettings();
+            if (config.fishing.general == null)
+                config.fishing.general = new ModConfig.FishingCategory.GeneralSettings();
             if (config.fishing.safety == null) config.fishing.safety = new ModConfig.FishingCategory.SafetyCategory();
 
-            if (config.fishing.general.fishMode == null) config.fishing.general.fishMode = FishingOptions.FishMode.VANILLA;
-            if (config.fishing.general.actionSlot == null) config.fishing.general.actionSlot = FishingOptions.ActionSlot.SLOT_3;
+            if (config.fishing.general.fishMode == null)
+                config.fishing.general.fishMode = FishingOptions.FishMode.VANILLA;
+            if (config.fishing.general.actionSlot == null)
+                config.fishing.general.actionSlot = FishingOptions.ActionSlot.SLOT_3;
 
             config.fishing.safety.minCastDelay = Math.max(config.fishing.safety.minCastDelay, ModConfig.FishingCategory.SafetyCategory.MIN_CAST_DELAY_MS);
             config.fishing.safety.maxCastDelay = Math.max(config.fishing.safety.maxCastDelay, ModConfig.FishingCategory.SafetyCategory.MIN_CAST_DELAY_MS);
@@ -71,10 +75,29 @@ public class ConfigManager {
             config.farming.safety.threshold = Math.max(0.1, config.farming.safety.threshold);
             config.farming.general.pointRange = Math.max(0.1, config.farming.general.pointRange);
 
-            if (config.disconnect == null) config.disconnect = new ModConfig.DisconnectCategory();
-            if (config.disconnect.reconnect == null) config.disconnect.reconnect = new ModConfig.ReconnectCategory();
+            config.farming.safety.stopAfterMinutes = Math.clamp(config.farming.safety.stopAfterMinutes, 1, 480);
+            config.fishing.safety.stopAfterMinutes = Math.clamp(config.fishing.safety.stopAfterMinutes, 1, 480);
+
+            config.discord.heartbeatMinutes = Math.clamp(config.discord.heartbeatMinutes, 1, 180);
+
+            if (config.discord == null) config.discord = new ModConfig.DiscordCategory();
+            if (config.reconnect == null) config.reconnect = new ModConfig.ReconnectCategory();
 
             if (config.misc == null) config.misc = new ModConfig.MiscCategory();
+
+            if (config.guard == null) config.guard = new ModConfig.GuardCategory();
+
+            config.guard.healthPercent = Math.clamp(config.guard.healthPercent, 0, 90);
+            config.guard.teleportDistance = Math.max(0, config.guard.teleportDistance);
+
+            if (config.discord == null) config.discord = new ModConfig.DiscordCategory();
+            if (config.reconnect == null) config.reconnect = new ModConfig.ReconnectCategory();
+
+            // Settings saved by older versions lived inside the Discord category
+            if (config.discord.legacyReconnect != null) {
+                config.reconnect = config.discord.legacyReconnect;
+                config.discord.legacyReconnect = null;
+            }
 
             if (!firstLoadDone) {
                 // Features must never start by themselves when the game launches

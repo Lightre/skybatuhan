@@ -1,21 +1,23 @@
 package com.lightre.skybatuhan.manager;
 
-import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.ModConfig;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents;
+import com.lightre.skybatuhan.util.Alerts;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.screens.ConnectScreen;
-import net.minecraft.client.gui.screens.DisconnectedScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.ConnectScreen;
+import net.minecraft.client.gui.screens.DisconnectedScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.network.chat.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -31,17 +33,19 @@ import java.util.concurrent.ThreadLocalRandom;
  * (reconnect if needed, then /lobby (only when still connected), /skyblock, /warp), resume.
  */
 public class SessionMonitor {
+    private static final Logger LOG = LoggerFactory.getLogger("SkyBatuhan/Session");
+
     private enum State {
-        IDLE, WAIT_BEFORE,                      // random wait, then reconnect or run the commands
-        CONNECTING, RUN_COMMANDS, COOLDOWN      // failed attempt limit reached inside the window
+        IDLE, WAIT_BEFORE,                  // random wait, then reconnect or run the commands
+        CONNECTING, RUN_COMMANDS, COOLDOWN  // failed attempt limit reached inside the window
     }
 
-    private static final long QUICK_FAIL_MS = 5 * 60 * 1000L;       // trouble this soon after resuming = failed attempt
+    private static final long QUICK_FAIL_MS = 5 * 60 * 1000L;   // trouble this soon after resuming = failed attempt
     private static final long WORLD_CHANGE_COOLDOWN_MS = 5000L;
     private static final long WORLD_CHANGE_GRACE_MS = 5_000L;
     private static final long CONNECT_TIMEOUT_MS = 90_000L;
     private static final long LEFT_GAME_WINDOW_MS = 5000L;
-    private static final long GAP_TOLERANCE_MS = 45_000L;   // server transfers leave the game for a while
+    private static final long GAP_TOLERANCE_MS = 45_000L;       // server transfers leave the game for a while
 
     private static State state = State.IDLE;
     private static long nextActionAt = 0L;
@@ -55,7 +59,7 @@ public class SessionMonitor {
     private static boolean awayDuringCommands = false;
     private static ServerData lastServerData = null;
 
-    // true while we are inside a level on a connection
+    // True while we are inside a level on a connection
     private static boolean inGame = false;
     private static long leftGameAt = 0L;
     private static String lastServer = "unknown";
@@ -107,6 +111,17 @@ public class SessionMonitor {
         ClientTickEvents.END_CLIENT_TICK.register(SessionMonitor::onTick);
     }
 
+    public static boolean isRecovering() {
+        return state != State.IDLE;
+    }
+
+    /**
+     * True shortly after a recovery resumed Auto Farm: a stuck stop in this window counts as a failed recovery.
+     */
+    public static boolean isWatchingResume() {
+        return lastResumeAt != 0L && System.currentTimeMillis() - lastResumeAt < QUICK_FAIL_MS;
+    }
+
     // ================= EVENTS =================
 
     private static void markLeftGame(Minecraft client) {
@@ -125,19 +140,21 @@ public class SessionMonitor {
     }
 
     private static void onWorldChange(Minecraft client) {
-        if (state != State.IDLE) return; // world changes are expected while recovering
+        if (state != State.IDLE) return; // World changes are expected while recovering
 
         long now = System.currentTimeMillis();
         if (now < ignoreWorldChangeUntil || now - lastWorldChangeAt < WORLD_CHANGE_COOLDOWN_MS) return;
 
         boolean farmOn = ModuleManager.getFarmFeature().isEnabled();
         boolean fishOn = ModuleManager.getFishFeature().isEnabled();
-        if (!farmOn && !fishOn) return; // nothing running: not our business
+        if (!farmOn && !fishOn) return; // Nothing running: not our business
 
+        // onWorldChange: after lastWorldChangeAt = now;
         lastWorldChangeAt = now;
+        flash();
 
-        ModConfig.DisconnectCategory notify = ConfigManager.config.disconnect;
-        ModConfig.ReconnectCategory cfg = notify.reconnect;
+        ModConfig.DiscordCategory notify = ConfigManager.config.discord;
+        ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
 
         if (notify.notifyWorldChange) {
             Webhook.notifyIfEnabled("**World changed** on `" + lastServer + "`." + (fishOn ? " Auto Fish stopped." : ""));
@@ -155,10 +172,10 @@ public class SessionMonitor {
     }
 
     private static void onDisconnectedScreen(Minecraft client, Screen screen) {
-        if (screen == lastHandledScreen) return; // window resize re-inits the same screen
+        if (screen == lastHandledScreen) return; // Window resize re-inits the same screen
 
-        ModConfig.DisconnectCategory notify = ConfigManager.config.disconnect;
-        ModConfig.ReconnectCategory cfg = notify.reconnect;
+        ModConfig.DiscordCategory notify = ConfigManager.config.discord;
+        ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
         long now = System.currentTimeMillis();
 
         switch (state) {
@@ -183,7 +200,9 @@ public class SessionMonitor {
                 boolean fishOn = ModuleManager.getFishFeature().isEnabled() || fishOnAtLeave;
                 farmOnAtLeave = false;
                 fishOnAtLeave = false;
-                if (!farmOn && !fishOn) return; // nothing running: not our business
+                // onDisconnectedScreen, case IDLE: right after the "nothing running" check
+                if (!farmOn && !fishOn) return; // Nothing running: not our business
+                flash();
 
                 String reason = readScreenText(screen);
                 if (notify.notifyDisconnect) {
@@ -212,7 +231,7 @@ public class SessionMonitor {
     // ================= RECOVERY FLOW =================
 
     private static void beginRecovery(Minecraft client, String reason) {
-        ModConfig.ReconnectCategory cfg = ConfigManager.config.disconnect.reconnect;
+        ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
         long now = System.currentTimeMillis();
 
         stopFarm(client);
@@ -238,7 +257,7 @@ public class SessionMonitor {
     }
 
     private static void onAttemptFailed(Minecraft client, String reason, String why) {
-        ModConfig.ReconnectCategory cfg = ConfigManager.config.disconnect.reconnect;
+        ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
         long now = System.currentTimeMillis();
 
         stopFarm(client);
@@ -262,7 +281,9 @@ public class SessionMonitor {
         report(reason + ". Retrying in " + waitMs / 1000 + "s (attempt " + attemptNumber() + "/" + cfg.maxAttempts + ").");
     }
 
+    // enterCooldown: first line of the method
     private static void enterCooldown(String reason, ModConfig.ReconnectCategory cfg, long now) {
+        flash();
         Long firstFailure = failureTimes.peekFirst();
         long end = (firstFailure != null ? firstFailure : now) + windowMs(cfg);
         state = State.COOLDOWN;
@@ -278,7 +299,7 @@ public class SessionMonitor {
         commands.clear();
         failureTimes.clear();
         lastResumeAt = 0L;
-        SkyBatuhan.LOGGER.info("[Session] Recovery cancelled: {}", reason);
+        LOG.info("Recovery cancelled: {}", reason);
     }
 
     public static void resetAttempts() {
@@ -292,7 +313,9 @@ public class SessionMonitor {
         }
     }
 
+    // abort: first line of the method
     private static void abort(String reason) {
+        flash();
         state = State.IDLE;
         wantReconnect = false;
         commands.clear();
@@ -307,8 +330,8 @@ public class SessionMonitor {
         if (resume) {
             var farm = ModuleManager.getFarmFeature();
             farm.resetDirection(); // /warp starts at the farm's beginning
-            farm.setState(client, true);
-            farm.startLanding(client);
+            farm.resume(client);
+            farm.startLanding();
         }
 
         state = State.IDLE;
@@ -356,7 +379,7 @@ public class SessionMonitor {
             return;
         }
 
-        ModConfig.ReconnectCategory cfg = ConfigManager.config.disconnect.reconnect;
+        ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
         boolean connected = inGame && client.player != null;
 
         switch (state) {
@@ -390,7 +413,7 @@ public class SessionMonitor {
                     wantReconnect = false;
                     buildCommands(cfg, false);
                     schedule(State.RUN_COMMANDS, randomMs(cfg.settleMinSeconds, cfg.settleMaxSeconds));
-                    SkyBatuhan.LOGGER.info("[Session] Joined, running commands soon.");
+                    LOG.info("Joined, running commands soon.");
                 } else if (now - connectStartedAt > CONNECT_TIMEOUT_MS) {
                     onAttemptFailed(client, "Connection timed out", null);
                 }
@@ -449,7 +472,7 @@ public class SessionMonitor {
             try {
                 farm.setState(client, false);
             } catch (Exception e) {
-                SkyBatuhan.LOGGER.warn("Could not stop Auto Farm", e);
+                LOG.warn("Could not stop Auto Farm", e);
             }
         }
     }
@@ -460,7 +483,7 @@ public class SessionMonitor {
             try {
                 fish.setState(client, false);
             } catch (Exception e) {
-                SkyBatuhan.LOGGER.warn("Could not stop Auto Fish", e);
+                LOG.warn("Could not stop Auto Fish", e);
             }
         }
     }
@@ -475,13 +498,13 @@ public class SessionMonitor {
 
         connectStartedAt = System.currentTimeMillis();
         state = State.CONNECTING;
-        SkyBatuhan.LOGGER.info("[Session] Connecting to {} (attempt {}/{})", address, attemptNumber(), cfg.maxAttempts);
+        LOG.info("Connecting to {} (attempt {}/{})", address, attemptNumber(), cfg.maxAttempts);
 
         try {
             ServerData data = lastServerData != null ? lastServerData : new ServerData("Reconnect", address, ServerData.Type.OTHER);
             ConnectScreen.startConnecting(new TitleScreen(), client, ServerAddress.parseString(address), data, false, null);
         } catch (Exception e) {
-            SkyBatuhan.LOGGER.warn("Could not start connecting", e);
+            LOG.warn("Could not start connecting", e);
             onAttemptFailed(client, "Could not start connecting", null);
         }
     }
@@ -504,7 +527,7 @@ public class SessionMonitor {
     private static void sendCommand(Minecraft client, String command) {
         if (client.player == null) return;
         client.player.connection.sendCommand(command);
-        SkyBatuhan.LOGGER.info("[Session] Sent command: /{}", command);
+        LOG.info("Sent command: /{}", command);
     }
 
     // ================= HELPERS =================
@@ -515,9 +538,12 @@ public class SessionMonitor {
     }
 
     private static long randomMs(int minSeconds, int maxSeconds) {
-        int lo = Math.max(1, Math.min(minSeconds, maxSeconds));
-        int hi = Math.max(1, Math.max(minSeconds, maxSeconds));
-        return ThreadLocalRandom.current().nextLong(lo * 1000L, hi * 1000L + 1);
+        int lowest = Math.min(minSeconds, maxSeconds);
+        int highest = Math.max(minSeconds, maxSeconds);
+
+        long lowMs = Math.max(1, lowest) * 1000L;
+        long highMs = Math.max(1, highest) * 1000L;
+        return ThreadLocalRandom.current().nextLong(lowMs, highMs + 1);
     }
 
     private static boolean isBan(String text) {
@@ -534,13 +560,17 @@ public class SessionMonitor {
                 }
             }
         } catch (Exception e) {
-            SkyBatuhan.LOGGER.warn("Could not read the disconnect screen", e);
+            LOG.warn("Could not read the disconnect screen", e);
         }
         return parts.isEmpty() ? "(reason unavailable)" : String.join("\n", parts);
     }
 
+    private static void flash() {
+        Alerts.flashTaskbar(Minecraft.getInstance());
+    }
+
     private static void report(String text) {
-        SkyBatuhan.LOGGER.info("[Session] {}", text);
+        LOG.info("{}", text);
         Webhook.notifyIfEnabled("**Reconnect for Farming**: " + text);
     }
 }

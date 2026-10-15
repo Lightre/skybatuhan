@@ -1,12 +1,13 @@
 package com.lightre.skybatuhan.base;
 
 import com.google.gson.annotations.Expose;
-import com.lightre.skybatuhan.manager.UpdateManager;
+import com.google.gson.annotations.SerializedName;
+import com.lightre.skybatuhan.base.enums.FishingOptions.*;
 import com.lightre.skybatuhan.manager.Webhook;
+import com.lightre.skybatuhan.manager.UpdateManager;
 import com.lightre.skybatuhan.manager.SessionMonitor;
 import com.lightre.skybatuhan.util.Links;
 import com.lightre.skybatuhan.util.ModInfo;
-import com.lightre.skybatuhan.base.enums.FishingOptions.*;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.Social;
 import io.github.notenoughupdates.moulconfig.annotations.*;
@@ -32,8 +33,17 @@ public class ModConfig extends Config {
     public FishingCategory fishing = new FishingCategory();
 
     @Expose
-    @Category(name = "Disconnect", desc = "Discord notifications for disconnects and world changes")
-    public DisconnectCategory disconnect = new DisconnectCategory();
+    @Category(name = "Safety", desc = "Emergency stop rules for Auto Farm and Auto Fish")
+    public GuardCategory guard = new GuardCategory();
+
+    @Expose
+    @Category(name = "Reconnect", desc = "Rejoin and resume Auto Farm after a disconnect or world change")
+    public ReconnectCategory reconnect = new ReconnectCategory();
+
+    @Expose
+    @SerializedName(value = "discord", alternate = {"disconnect"})
+    @Category(name = "Discord", desc = "Discord notifications")
+    public DiscordCategory discord = new DiscordCategory();
 
     @Expose
     @Category(name = "Misc", desc = "Miscellaneous settings")
@@ -69,32 +79,32 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Check Now", desc = "Look for a new version right now.")
         @ConfigEditorButton(buttonText = "Check")
         public transient Runnable checkUpdatesNow = UpdateManager::checkNow;
-    }
 
-    public static class LibrariesCategory {
-        @ConfigOption(name = "Minecraft", desc = "Target Minecraft & Java runtime.")
-        @ConfigEditorInfoValue
-        public transient String minecraft = "§a" + ModInfo.getMinecraftVersion() + " §7(Java " + ModInfo.getJavaVersion() + ")";
+        public static class LibrariesCategory {
+            @ConfigOption(name = "Minecraft", desc = "Target Minecraft & Java runtime.")
+            @ConfigEditorInfoValue
+            public transient String minecraft = "§a" + ModInfo.getMinecraftVersion() + " §7(Java " + ModInfo.getJavaVersion() + ")";
 
-        @ConfigOption(name = "Fabric Loader", desc = "Mod loader version.")
-        @ConfigEditorInfoValue
-        public transient String loader = "§6v" + ModInfo.getLoaderVersion();
+            @ConfigOption(name = "Fabric Loader", desc = "Mod loader version.")
+            @ConfigEditorInfoValue
+            public transient String loader = "§6v" + ModInfo.getLoaderVersion();
 
-        @ConfigOption(name = "Fabric API", desc = "Events, keybinds and hooks.")
-        @ConfigEditorInfoValue
-        public transient String fabricApi = "§ev" + ModInfo.getFabricApiVersion();
+            @ConfigOption(name = "Fabric API", desc = "Events, keybinds and hooks.")
+            @ConfigEditorInfoValue
+            public transient String fabricApi = "§ev" + ModInfo.getFabricApiVersion();
 
-        @ConfigOption(name = "MoulConfig", desc = "Settings GUI library.")
-        @ConfigEditorInfoValue
-        public transient String moulConfig = "§bv" + ModInfo.getMoulConfigVersion();
+            @ConfigOption(name = "MoulConfig", desc = "Settings GUI library.")
+            @ConfigEditorInfoValue
+            public transient String moulConfig = "§bv" + ModInfo.getMoulConfigVersion();
 
-        @ConfigOption(name = "MoulConfig on GitHub", desc = "Open the library page.")
-        @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable openMoulConfig = () -> Links.open("https://github.com/NotEnoughUpdates/MoulConfig");
+            @ConfigOption(name = "MoulConfig on GitHub", desc = "Open the library page.")
+            @ConfigEditorButton(buttonText = "Open")
+            public transient Runnable openMoulConfig = () -> Links.open("https://github.com/NotEnoughUpdates/MoulConfig");
 
-        @ConfigOption(name = "Fabric", desc = "Open the Fabric website.")
-        @ConfigEditorButton(buttonText = "Open")
-        public transient Runnable openFabric = () -> Links.open("https://fabricmc.net");
+            @ConfigOption(name = "Fabric", desc = "Open the Fabric website.")
+            @ConfigEditorButton(buttonText = "Open")
+            public transient Runnable openFabric = () -> Links.open("https://fabricmc.net");
+        }
     }
 
     // ==========================================
@@ -172,6 +182,16 @@ public class ModConfig extends Config {
 
         public static class SafetyCategory {
             @Expose
+            @ConfigOption(name = "Auto Stop Timer", desc = "Stop automatically after the time below. Counts only the time the feature is on. (default: off)")
+            @ConfigEditorBoolean
+            public boolean stopAfterEnabled = false;
+
+            @Expose
+            @ConfigOption(name = "Stop After (min)", desc = "How long the feature may run before it stops. (default: 60min)")
+            @ConfigEditorSlider(minValue = 1f, maxValue = 480f, minStep = 1f)
+            public int stopAfterMinutes = 60;
+
+            @Expose
             @ConfigOption(name = "Timeout (ms)", desc = "The time required for the feature to disable and sound an alarm if the player remains stationary. (default: 3000ms)")
             @ConfigEditorSlider(minValue = 500f, maxValue = 10000f, minStep = 10f)
             public int timeoutMs = 3000;
@@ -200,7 +220,7 @@ public class ModConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Safety Settings", desc = "")
+        @ConfigOption(name = "Delays & Safety", desc = "Reel and cast delays, AFK timeout and the auto stop timer.")
         public SafetyCategory safety = new SafetyCategory();
 
         public static class GeneralSettings {
@@ -232,6 +252,16 @@ public class ModConfig extends Config {
 
         public static class SafetyCategory {
             @Expose
+            @ConfigOption(name = "Auto Stop Timer", desc = "Stop automatically after the time below. Counts only the time the feature is on. (default: off)")
+            @ConfigEditorBoolean
+            public boolean stopAfterEnabled = false;
+
+            @Expose
+            @ConfigOption(name = "Stop After (min)", desc = "How long the feature may run before it stops. (default: 60min)")
+            @ConfigEditorSlider(minValue = 1f, maxValue = 480f, minStep = 1f)
+            public int stopAfterMinutes = 60;
+
+            @Expose
             @ConfigOption(name = "Min Reel Delay (ms)", desc = "Minimum random delay before reeling in the rod after a catch to simulate human reaction time. (default: 400ms)")
             @ConfigEditorSlider(minValue = 10f, maxValue = 2000f, minStep = 10f)
             public double minReelDelay = 400.0;
@@ -261,44 +291,29 @@ public class ModConfig extends Config {
     }
 
     // ==========================================
-    // 4. DISCONNECT CATEGORY & SUB-CLASSES
+    // 4. SAFETY CATEGORY
     // ==========================================
 
-    public static class DisconnectCategory {
+    public static class GuardCategory {
         @Expose
-        @ConfigOption(name = "Enabled", desc = "Toggle Discord notifications on/off.")
+        @ConfigOption(name = "Low Health Limit (%)", desc = "Stop when your health falls below this percent. 0 turns it off. Dying always stops. (default: 10%)")
+        @ConfigEditorSlider(minValue = 0f, maxValue = 90f, minStep = 5f)
+        public int healthPercent = 10;
+
+        @Expose
+        @ConfigOption(name = "Teleport Distance (blocks)", desc = "Stop when you are moved this far in a single tick. 0 turns it off. Auto Farm's own /home is ignored. Raise it if your Auto Fish action slot item teleports. (default: 10)")
+        @ConfigEditorSlider(minValue = 0f, maxValue = 50f, minStep = 1f)
+        public int teleportDistance = 10;
+
+        @Expose
+        @ConfigOption(name = "Leave Server On Stop", desc = "After any automatic stop (stuck, AFK timeout, low health, death, teleport) wait a few seconds and leave the server. Stopping by hand never leaves. (default: off)")
         @ConfigEditorBoolean
-        public boolean enabled = false;
-
-        @Expose
-        @ConfigOption(name = "Webhook URL", desc = "Discord channel webhook URL. Keep it private.")
-        @ConfigEditorText
-        public String webhookUrl = "";
-
-        @Expose
-        @ConfigOption(name = "Discord User ID", desc = "Your numeric ID, used to ping you.")
-        @ConfigEditorText
-        public String discordUserId = "";
-
-        @Expose
-        @ConfigOption(name = "Notify On Disconnect", desc = "Message when the server kicks you or the connection drops.")
-        @ConfigEditorBoolean
-        public boolean notifyDisconnect = true;
-
-        @Expose
-        @ConfigOption(name = "Notify On World Change", desc = "Message when you move to another world or dimension.")
-        @ConfigEditorBoolean
-        public boolean notifyWorldChange = true;
-
-        @ConfigOption(name = "Send Test Message", desc = "Sends a test message to check the webhook.")
-        @ConfigEditorButton(buttonText = "Send")
-        public transient Runnable sendTest = Webhook::sendTest;
-
-        @Expose
-        @ConfigOption(name = "Reconnect for Farming", desc = "Leave, wait and rejoin after a disconnect or world change.")
-        @Accordion
-        public ReconnectCategory reconnect = new ReconnectCategory();
+        public boolean leaveOnStop = false;
     }
+
+    // ==========================================
+    // // 5. RECONNECT CATEGORY
+    // ==========================================
 
     public static class ReconnectCategory {
         @Expose
@@ -382,7 +397,59 @@ public class ModConfig extends Config {
     }
 
     // ==========================================
-    // 5. MISC CATEGORY & SUB-CLASSES
+    // // 6. DISCORD CATEGORY
+    // ==========================================
+
+    public static class DiscordCategory {
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Toggle Discord notifications on/off.")
+        @ConfigEditorBoolean
+        public boolean enabled = false;
+
+        @Expose
+        @ConfigOption(name = "Webhook URL", desc = "Discord channel webhook URL. Keep it private.")
+        @ConfigEditorText
+        public String webhookUrl = "";
+
+        @Expose
+        @ConfigOption(name = "Discord User ID", desc = "Your numeric ID, used to ping you.")
+        @ConfigEditorText
+        public String discordUserId = "";
+
+        @Expose
+        @ConfigOption(name = "Notify On Disconnect", desc = "Message when the server kicks you or the connection drops.")
+        @ConfigEditorBoolean
+        public boolean notifyDisconnect = true;
+
+        @Expose
+        @ConfigOption(name = "Notify On World Change", desc = "Message when you move to another world or dimension.")
+        @ConfigEditorBoolean
+        public boolean notifyWorldChange = true;
+
+        @Expose
+        @ConfigOption(name = "Heartbeat", desc = "While Auto Farm or Auto Fish runs, send a quiet \"still running\" message (no ping) at the interval below. If the messages stop coming, the game or your PC probably froze. (default: off)")
+        @ConfigEditorBoolean
+        public boolean heartbeatEnabled = false;
+
+        @Expose
+        @ConfigOption(name = "Heartbeat Interval (min)", desc = "Time between heartbeat messages. (default: 30min)")
+        @ConfigEditorSlider(minValue = 1f, maxValue = 180f, minStep = 1f)
+        public int heartbeatMinutes = 30;
+
+        @ConfigOption(name = "Send Test Message", desc = "Sends a test message to check the webhook.")
+        @ConfigEditorButton(buttonText = "Send")
+        public transient Runnable sendTest = Webhook::sendTest;
+
+        /**
+         * Older versions saved the reconnect settings here. ConfigManager moves them to ModConfig.reconnect on load.
+         */
+        @Expose
+        @SerializedName("reconnect")
+        public ReconnectCategory legacyReconnect = null;
+    }
+
+    // ==========================================
+    // 7. MISC CATEGORY & SUB-CLASSES
     // ==========================================
 
     public static class MiscCategory {
@@ -390,6 +457,11 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Dark Auction Notifier", desc = "Receive notifications when a dark auction starts.")
         @ConfigEditorBoolean
         public boolean darkAuctionNotifier = false;
+
+        @Expose
+        @ConfigOption(name = "Dark Auction Discord Message", desc = "Also send a Discord message 5 minutes and 1 minute before a dark auction starts. Needs Discord notifications to be on. (default: off)")
+        @ConfigEditorBoolean
+        public boolean darkAuctionDiscord = false;
     }
 
     // ==========================================
