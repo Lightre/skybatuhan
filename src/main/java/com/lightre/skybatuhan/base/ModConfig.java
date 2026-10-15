@@ -445,6 +445,11 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Dark Auction Notifier", desc = "Receive notifications when a dark auction starts.")
         @ConfigEditorBoolean
         public boolean darkAuctionNotifier = false;
+
+        @Expose
+        @ConfigOption(name = "Dark Auction Discord Message", desc = "Also send a Discord message 5 minutes and 1 minute before a dark auction starts. Needs Discord notifications to be on. (default: off)")
+        @ConfigEditorBoolean
+        public boolean darkAuctionDiscord = false;
     }
 
     // ==========================================
