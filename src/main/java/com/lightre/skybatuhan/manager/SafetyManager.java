@@ -20,6 +20,7 @@ public final class SafetyManager {
     private static final long LEAVE_MIN_MS = 2000L;
     private static final long LEAVE_MAX_MS = 5000L;
     private static final long HOME_TELEPORT_GRACE_MS = 5000L;
+    private static final double HOME_ARRIVAL_RADIUS = 3.0;
 
     private static long leaveAt = 0L;
     private static String leaveReason = "";
@@ -81,7 +82,8 @@ public final class SafetyManager {
 
         if (cfg.teleportDistance > 0 && previous != null) {
             double moved = pos.distanceTo(previous);
-            boolean ownHome = System.currentTimeMillis() - farm.getLastHomeCommandAt() < HOME_TELEPORT_GRACE_MS;
+            var home = PointConfigManager.data.homePoint;
+            boolean ownHome = System.currentTimeMillis() - farm.getLastHomeCommandAt() < HOME_TELEPORT_GRACE_MS || (home != null && home.distanceTo(pos) < HOME_ARRIVAL_RADIUS);
 
             if (moved > cfg.teleportDistance && !ownHome) {
                 trigger(client, String.format(Locale.ROOT, "you were moved %.0f blocks in one tick", moved));
