@@ -220,7 +220,7 @@ public class ModConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Safety Settings", desc = "")
+        @ConfigOption(name = "Delays & Safety", desc = "Reel and cast delays, AFK timeout and the auto stop timer.")
         public SafetyCategory safety = new SafetyCategory();
 
         public static class GeneralSettings {
