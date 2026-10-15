@@ -54,6 +54,7 @@ public class ModuleManager {
 
         handleMenu(client);
         bindings.forEach(binding -> binding.sync(client));
+        SafetyManager.onTick(client);
         DarkAuctionNotifier.onTick(client);
 
         for (Feature feature : features) {

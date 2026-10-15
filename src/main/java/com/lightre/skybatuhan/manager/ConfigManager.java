@@ -76,6 +76,8 @@ public class ConfigManager {
 
             if (config.misc == null) config.misc = new ModConfig.MiscCategory();
 
+            if (config.guard == null) config.guard = new ModConfig.GuardCategory();
+
             if (!firstLoadDone) {
                 // Features must never start by themselves when the game launches
                 config.farming.autoFarmEnabled = false;

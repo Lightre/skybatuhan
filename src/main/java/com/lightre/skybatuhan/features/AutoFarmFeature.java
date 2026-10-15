@@ -2,10 +2,7 @@ package com.lightre.skybatuhan.features;
 
 import com.lightre.skybatuhan.base.Feature;
 import com.lightre.skybatuhan.base.ModConfig;
-import com.lightre.skybatuhan.manager.Webhook;
-import com.lightre.skybatuhan.manager.ConfigManager;
-import com.lightre.skybatuhan.manager.PointConfigManager;
-import com.lightre.skybatuhan.util.Alerts;
+import com.lightre.skybatuhan.manager.*;
 import com.lightre.skybatuhan.util.FarmPoint;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -92,8 +89,7 @@ public class AutoFarmFeature extends Feature {
     }
 
     private void handleSafety(Minecraft client, Vec3 currentPos, long now) {
-        var player = client.player;
-        if (player == null) return;
+        if (client.player == null) return;
 
         if (hasNoMovement(currentMovement())) {
             lastMovementTime = now;
@@ -109,11 +105,7 @@ public class AutoFarmFeature extends Feature {
         if (now - lastMovementTime > ConfigManager.config.farming.safety.timeoutMs && !alarmTriggered) {
             alarmTriggered = true;
             lastStuckStopAt = now;
-            Webhook.notifyIfEnabled("**Auto Farm stopped**: stuck detected.");
-            Alerts.warning(client);
-            player.sendSystemMessage(Component.literal("§c§l[WARNING] §fSystem stopped! Stuck was detected."));
-            this.toggle(client);
-            resetMovement(client);
+            SafetyManager.autoStop(client, this, "stuck detected", !SessionMonitor.isWatchingResume());
         }
     }
 

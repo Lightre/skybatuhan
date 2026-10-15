@@ -2,16 +2,15 @@ package com.lightre.skybatuhan.features;
 
 import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.Feature;
-import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.base.ModConfig;
-import com.lightre.skybatuhan.manager.Webhook;
 import com.lightre.skybatuhan.base.enums.FishingOptions.FishMode;
-import com.lightre.skybatuhan.util.Alerts;
+import com.lightre.skybatuhan.manager.ConfigManager;
+import com.lightre.skybatuhan.manager.SafetyManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.network.chat.Component;
 
 import java.util.concurrent.Executors;
@@ -259,11 +258,7 @@ public class AutoFishFeature extends Feature {
         long timeoutMs = (long) (ConfigManager.config.fishing.safety.afkTimeoutSeconds * 1000);
 
         if (lastHookTime > 0 && (System.currentTimeMillis() - lastHookTime > timeoutMs)) {
-            client.player.sendSystemMessage(Component.literal("§c§l[WARNING] §fSystem stopped! AFK/Lag safety timeout triggered."));
-            Webhook.notifyIfEnabled("**Auto Fish stopped**: AFK/lag timeout.");
-
-            Alerts.warning(client);
-            this.toggle(client);
+            SafetyManager.autoStop(client, this, "AFK/lag timeout", true);
         }
     }
 

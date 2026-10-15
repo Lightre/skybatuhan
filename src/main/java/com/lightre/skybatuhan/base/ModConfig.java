@@ -32,6 +32,10 @@ public class ModConfig extends Config {
     public FishingCategory fishing = new FishingCategory();
 
     @Expose
+    @Category(name = "Safety", desc = "Emergency stop rules for Auto Farm and Auto Fish")
+    public GuardCategory guard = new GuardCategory();
+
+    @Expose
     @Category(name = "Disconnect", desc = "Discord notifications for disconnects and world changes")
     public DisconnectCategory disconnect = new DisconnectCategory();
 
@@ -258,6 +262,17 @@ public class ModConfig extends Config {
 
             public static final long MIN_CAST_DELAY_MS = 200;
         }
+    }
+
+    // ==========================================
+    // SAFETY CATEGORY
+    // ==========================================
+
+    public static class GuardCategory {
+        @Expose
+        @ConfigOption(name = "Leave Server On Stop", desc = "After any automatic stop (stuck, AFK timeout, low health, death, teleport) wait a few seconds and leave the server. Stopping by hand never leaves. (default: off)")
+        @ConfigEditorBoolean
+        public boolean leaveOnStop = false;
     }
 
     // ==========================================

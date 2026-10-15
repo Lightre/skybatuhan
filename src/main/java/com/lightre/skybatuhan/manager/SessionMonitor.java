@@ -32,16 +32,16 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class SessionMonitor {
     private enum State {
-        IDLE, WAIT_BEFORE,                      // random wait, then reconnect or run the commands
-        CONNECTING, RUN_COMMANDS, COOLDOWN      // failed attempt limit reached inside the window
+        IDLE, WAIT_BEFORE,                  // random wait, then reconnect or run the commands
+        CONNECTING, RUN_COMMANDS, COOLDOWN  // failed attempt limit reached inside the window
     }
 
-    private static final long QUICK_FAIL_MS = 5 * 60 * 1000L;       // trouble this soon after resuming = failed attempt
+    private static final long QUICK_FAIL_MS = 5 * 60 * 1000L;   // trouble this soon after resuming = failed attempt
     private static final long WORLD_CHANGE_COOLDOWN_MS = 5000L;
     private static final long WORLD_CHANGE_GRACE_MS = 5_000L;
     private static final long CONNECT_TIMEOUT_MS = 90_000L;
     private static final long LEFT_GAME_WINDOW_MS = 5000L;
-    private static final long GAP_TOLERANCE_MS = 45_000L;   // server transfers leave the game for a while
+    private static final long GAP_TOLERANCE_MS = 45_000L;       // server transfers leave the game for a while
 
     private static State state = State.IDLE;
     private static long nextActionAt = 0L;
@@ -55,7 +55,7 @@ public class SessionMonitor {
     private static boolean awayDuringCommands = false;
     private static ServerData lastServerData = null;
 
-    // true while we are inside a level on a connection
+    // True while we are inside a level on a connection
     private static boolean inGame = false;
     private static long leftGameAt = 0L;
     private static String lastServer = "unknown";
@@ -111,6 +111,13 @@ public class SessionMonitor {
         return state != State.IDLE;
     }
 
+    /**
+     * True shortly after a recovery resumed Auto Farm: a stuck stop in this window counts as a failed recovery.
+     */
+    public static boolean isWatchingResume() {
+        return lastResumeAt != 0L && System.currentTimeMillis() - lastResumeAt < QUICK_FAIL_MS;
+    }
+
     // ================= EVENTS =================
 
     private static void markLeftGame(Minecraft client) {
@@ -129,14 +136,14 @@ public class SessionMonitor {
     }
 
     private static void onWorldChange(Minecraft client) {
-        if (state != State.IDLE) return; // world changes are expected while recovering
+        if (state != State.IDLE) return; // World changes are expected while recovering
 
         long now = System.currentTimeMillis();
         if (now < ignoreWorldChangeUntil || now - lastWorldChangeAt < WORLD_CHANGE_COOLDOWN_MS) return;
 
         boolean farmOn = ModuleManager.getFarmFeature().isEnabled();
         boolean fishOn = ModuleManager.getFishFeature().isEnabled();
-        if (!farmOn && !fishOn) return; // nothing running: not our business
+        if (!farmOn && !fishOn) return; // Nothing running: not our business
 
         lastWorldChangeAt = now;
 
@@ -159,7 +166,7 @@ public class SessionMonitor {
     }
 
     private static void onDisconnectedScreen(Minecraft client, Screen screen) {
-        if (screen == lastHandledScreen) return; // window resize re-inits the same screen
+        if (screen == lastHandledScreen) return; // Window resize re-inits the same screen
 
         ModConfig.DisconnectCategory notify = ConfigManager.config.disconnect;
         ModConfig.ReconnectCategory cfg = notify.reconnect;
@@ -187,7 +194,7 @@ public class SessionMonitor {
                 boolean fishOn = ModuleManager.getFishFeature().isEnabled() || fishOnAtLeave;
                 farmOnAtLeave = false;
                 fishOnAtLeave = false;
-                if (!farmOn && !fishOn) return; // nothing running: not our business
+                if (!farmOn && !fishOn) return; // Nothing running: not our business
 
                 String reason = readScreenText(screen);
                 if (notify.notifyDisconnect) {
