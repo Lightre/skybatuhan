@@ -1,5 +1,6 @@
 package com.lightre.skybatuhan;
 
+import com.lightre.skybatuhan.hud.HudManager;
 import com.lightre.skybatuhan.manager.*;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -19,6 +20,7 @@ public class SkyBatuhan implements ClientModInitializer {
         CommandManager.init();
         SessionMonitor.init();
         UpdateManager.init();
+        HudManager.init();
 
         ClientTickEvents.END_CLIENT_TICK.register(ModuleManager::onTick);
         ClientLifecycleEvents.CLIENT_STOPPING.register(_ -> ConfigManager.save());
