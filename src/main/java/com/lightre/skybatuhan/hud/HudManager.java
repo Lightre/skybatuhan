@@ -1,6 +1,9 @@
 package com.lightre.skybatuhan.hud;
 
 import com.lightre.skybatuhan.SkyBatuhan;
+import com.lightre.skybatuhan.hud.elements.FarmElement;
+import com.lightre.skybatuhan.hud.elements.FishElement;
+import com.lightre.skybatuhan.hud.elements.SessionElement;
 import com.lightre.skybatuhan.manager.ConfigManager;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.Minecraft;
@@ -34,6 +37,10 @@ public final class HudManager {
 
     public static void init() {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(SkyBatuhan.MOD_ID, "hud"), (graphics, _) -> render(graphics));
+
+        register(new SessionElement());
+        register(new FarmElement());
+        register(new FishElement());
     }
 
     public static void register(HudElement element) {
