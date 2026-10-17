@@ -3,6 +3,7 @@ package com.lightre.skybatuhan.base;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.lightre.skybatuhan.base.enums.FishingOptions.*;
+import com.lightre.skybatuhan.hud.HudLayout;
 import com.lightre.skybatuhan.manager.Webhook;
 import com.lightre.skybatuhan.manager.UpdateManager;
 import com.lightre.skybatuhan.manager.SessionMonitor;
@@ -14,8 +15,10 @@ import io.github.notenoughupdates.moulconfig.annotations.*;
 import io.github.notenoughupdates.moulconfig.common.MyResourceLocation;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
 
-import java.util.ArrayList;
+import java.util.Map;
 import java.util.List;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 @SuppressWarnings("unused")
 public class ModConfig extends Config {
@@ -44,6 +47,10 @@ public class ModConfig extends Config {
     @SerializedName(value = "discord", alternate = {"disconnect"})
     @Category(name = "Discord", desc = "Discord notifications")
     public DiscordCategory discord = new DiscordCategory();
+
+    @Expose
+    @Category(name = "HUD", desc = "On-screen boxes with live information")
+    public HudCategory hud = new HudCategory();
 
     @Expose
     @Category(name = "Misc", desc = "Miscellaneous settings")
@@ -449,7 +456,24 @@ public class ModConfig extends Config {
     }
 
     // ==========================================
-    // 7. MISC CATEGORY & SUB-CLASSES
+    // 7. HUD CATEGORY
+    // ==========================================
+
+    public static class HudCategory {
+        @Expose
+        @ConfigOption(name = "HUD Enabled", desc = "Show the on-screen boxes. They are always hidden with F1. (default: on)")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        /**
+         * Saved positions by box id. Only boxes the player moved are stored, the rest use their default.
+         */
+        @Expose
+        public Map<String, HudLayout> layouts = new HashMap<>();
+    }
+
+    // ==========================================
+    // 8. MISC CATEGORY & SUB-CLASSES
     // ==========================================
 
     public static class MiscCategory {
