@@ -465,11 +465,45 @@ public class ModConfig extends Config {
         @ConfigEditorBoolean
         public boolean enabled = true;
 
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Session Time", desc = "Time since the game was opened.")
+        public SessionBoxSettings session = new SessionBoxSettings();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Auto Farm", desc = "Status, run time, stop timer and reconnect progress.")
+        public RunningBoxSettings farm = new RunningBoxSettings();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Auto Fish", desc = "Status, run time and stop timer.")
+        public RunningBoxSettings fish = new RunningBoxSettings();
+
         /**
          * Saved positions by box id. Only boxes the player moved are stored, the rest use their default.
          */
         @Expose
         public Map<String, HudLayout> layouts = new HashMap<>();
+
+        public static class SessionBoxSettings {
+            @Expose
+            @ConfigOption(name = "Show", desc = "Show this box on the screen. (default: on)")
+            @ConfigEditorBoolean
+            public boolean enabled = true;
+        }
+
+        public static class RunningBoxSettings {
+            @Expose
+            @ConfigOption(name = "Show", desc = "Show this box on the screen. (default: on)")
+            @ConfigEditorBoolean
+            public boolean enabled = true;
+
+            @Expose
+            @ConfigOption(name = "Only While Running", desc = "Hide the box while the feature is off. (default: on)")
+            @ConfigEditorBoolean
+            public boolean onlyWhileRunning = true;
+        }
     }
 
     // ==========================================

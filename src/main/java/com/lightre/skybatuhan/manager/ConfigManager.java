@@ -89,6 +89,10 @@ public class ConfigManager {
             if (config.hud == null) config.hud = new ModConfig.HudCategory();
             if (config.hud.layouts == null) config.hud.layouts = new HashMap<>();
 
+            if (config.hud.session == null) config.hud.session = new ModConfig.HudCategory.SessionBoxSettings();
+            if (config.hud.farm == null) config.hud.farm = new ModConfig.HudCategory.RunningBoxSettings();
+            if (config.hud.fish == null) config.hud.fish = new ModConfig.HudCategory.RunningBoxSettings();
+
             if (config.guard == null) config.guard = new ModConfig.GuardCategory();
 
             config.guard.healthPercent = Math.clamp(config.guard.healthPercent, 0, 90);
