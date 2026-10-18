@@ -81,6 +81,7 @@ public final class HudManager {
 
         // F1 hides the whole HUD, Fabric does not hide our boxes by itself
         if (client.player == null || client.gui.hud.isHidden()) return;
+        if (client.gui.screen() instanceof HudEditorScreen) return; // the editor draws its own copies
         if (!ConfigManager.config.hud.enabled || elements.isEmpty()) return;
 
         HudCanvas canvas = new GuiHudCanvas(graphics, client.font);
