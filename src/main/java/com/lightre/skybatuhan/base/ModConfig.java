@@ -473,7 +473,7 @@ public class ModConfig extends Config {
         @Expose
         @Accordion
         @ConfigOption(name = "Session Time", desc = "Time since the game was opened.")
-        public SessionBoxSettings session = new SessionBoxSettings();
+        public BoxSettings session = new BoxSettings();
 
         @Expose
         @Accordion
@@ -483,7 +483,7 @@ public class ModConfig extends Config {
         @Expose
         @Accordion
         @ConfigOption(name = "Farming Profit", desc = "Coins per hour and total coins from Auto Farm, valued with Bazaar prices.")
-        public SessionBoxSettings farmProfit = new SessionBoxSettings();
+        public BoxSettings farmProfit = new BoxSettings();
 
         @Expose
         @Accordion
@@ -496,7 +496,7 @@ public class ModConfig extends Config {
         @Expose
         public Map<String, HudLayout> layouts = new HashMap<>();
 
-        public static class SessionBoxSettings {
+        public static class BoxSettings {
             @Expose
             @ConfigOption(name = "Show", desc = "Show this box on the screen. (default: off)")
             @ConfigEditorBoolean
