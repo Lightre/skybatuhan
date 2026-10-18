@@ -3,6 +3,8 @@ package com.lightre.skybatuhan.base;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.lightre.skybatuhan.base.enums.FishingOptions.*;
+import com.lightre.skybatuhan.hud.HudLayout;
+import com.lightre.skybatuhan.hud.HudEditorScreen;
 import com.lightre.skybatuhan.manager.Webhook;
 import com.lightre.skybatuhan.manager.UpdateManager;
 import com.lightre.skybatuhan.manager.SessionMonitor;
@@ -14,8 +16,10 @@ import io.github.notenoughupdates.moulconfig.annotations.*;
 import io.github.notenoughupdates.moulconfig.common.MyResourceLocation;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
 
-import java.util.ArrayList;
+import java.util.Map;
 import java.util.List;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 @SuppressWarnings("unused")
 public class ModConfig extends Config {
@@ -44,6 +48,10 @@ public class ModConfig extends Config {
     @SerializedName(value = "discord", alternate = {"disconnect"})
     @Category(name = "Discord", desc = "Discord notifications")
     public DiscordCategory discord = new DiscordCategory();
+
+    @Expose
+    @Category(name = "HUD", desc = "On-screen boxes with live information")
+    public HudCategory hud = new HudCategory();
 
     @Expose
     @Category(name = "Misc", desc = "Miscellaneous settings")
@@ -449,7 +457,62 @@ public class ModConfig extends Config {
     }
 
     // ==========================================
-    // 7. MISC CATEGORY & SUB-CLASSES
+    // 7. HUD CATEGORY
+    // ==========================================
+
+    public static class HudCategory {
+        @Expose
+        @ConfigOption(name = "HUD Enabled", desc = "Show the on-screen boxes. They are always hidden with F1. (default: on)")
+        @ConfigEditorBoolean
+        public boolean enabled = true;
+
+        @ConfigOption(name = "Edit Positions", desc = "Open the screen where you drag the boxes to where you want them. Also: /sbh hud")
+        @ConfigEditorButton(buttonText = "Edit")
+        public transient Runnable editPositions = HudEditorScreen::open;
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Session Time", desc = "Time since the game was opened.")
+        public SessionBoxSettings session = new SessionBoxSettings();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Auto Farm", desc = "Status, run time, stop timer and reconnect progress.")
+        public RunningBoxSettings farm = new RunningBoxSettings();
+
+        @Expose
+        @Accordion
+        @ConfigOption(name = "Auto Fish", desc = "Status, run time and stop timer.")
+        public RunningBoxSettings fish = new RunningBoxSettings();
+
+        /**
+         * Saved positions by box id. Only boxes the player moved are stored, the rest use their default.
+         */
+        @Expose
+        public Map<String, HudLayout> layouts = new HashMap<>();
+
+        public static class SessionBoxSettings {
+            @Expose
+            @ConfigOption(name = "Show", desc = "Show this box on the screen. (default: off)")
+            @ConfigEditorBoolean
+            public boolean enabled = false;
+        }
+
+        public static class RunningBoxSettings {
+            @Expose
+            @ConfigOption(name = "Show", desc = "Show this box on the screen. (default: off)")
+            @ConfigEditorBoolean
+            public boolean enabled = false;
+
+            @Expose
+            @ConfigOption(name = "Only While Running", desc = "Hide the box while the feature is off. (default: on)")
+            @ConfigEditorBoolean
+            public boolean onlyWhileRunning = true;
+        }
+    }
+
+    // ==========================================
+    // 8. MISC CATEGORY & SUB-CLASSES
     // ==========================================
 
     public static class MiscCategory {

@@ -122,6 +122,21 @@ public class SessionMonitor {
         return lastResumeAt != 0L && System.currentTimeMillis() - lastResumeAt < QUICK_FAIL_MS;
     }
 
+    /**
+     * Short progress text for the HUD, or null when no recovery is running.
+     */
+    public static String getStatusText() {
+        long secondsLeft = Math.max(0L, nextActionAt - System.currentTimeMillis()) / 1000L;
+
+        return switch (state) {
+            case IDLE -> null;
+            case WAIT_BEFORE -> "Waiting " + secondsLeft + "s";
+            case CONNECTING -> "Connecting";
+            case RUN_COMMANDS -> "Joining (" + commands.size() + " command(s) left)";
+            case COOLDOWN -> "Paused, about " + (secondsLeft / 60 + 1) + " min left";
+        };
+    }
+
     // ================= EVENTS =================
 
     private static void markLeftGame(Minecraft client) {

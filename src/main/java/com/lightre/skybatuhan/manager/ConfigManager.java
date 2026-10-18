@@ -11,8 +11,9 @@ import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorInfoText
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.util.HashMap;
 import java.nio.file.Path;
+import java.nio.file.Files;
 
 public class ConfigManager {
     // Directory: .minecraft/config/skybatuhan
@@ -84,6 +85,13 @@ public class ConfigManager {
             if (config.reconnect == null) config.reconnect = new ModConfig.ReconnectCategory();
 
             if (config.misc == null) config.misc = new ModConfig.MiscCategory();
+
+            if (config.hud == null) config.hud = new ModConfig.HudCategory();
+            if (config.hud.layouts == null) config.hud.layouts = new HashMap<>();
+
+            if (config.hud.session == null) config.hud.session = new ModConfig.HudCategory.SessionBoxSettings();
+            if (config.hud.farm == null) config.hud.farm = new ModConfig.HudCategory.RunningBoxSettings();
+            if (config.hud.fish == null) config.hud.fish = new ModConfig.HudCategory.RunningBoxSettings();
 
             if (config.guard == null) config.guard = new ModConfig.GuardCategory();
 
