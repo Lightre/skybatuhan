@@ -92,6 +92,7 @@ public class ConfigManager {
             if (config.hud.session == null) config.hud.session = new ModConfig.HudCategory.SessionBoxSettings();
             if (config.hud.farm == null) config.hud.farm = new ModConfig.HudCategory.RunningBoxSettings();
             if (config.hud.fish == null) config.hud.fish = new ModConfig.HudCategory.RunningBoxSettings();
+            if (config.hud.farmProfit == null) config.hud.farmProfit = new ModConfig.HudCategory.SessionBoxSettings();
 
             if (config.guard == null) config.guard = new ModConfig.GuardCategory();
 
