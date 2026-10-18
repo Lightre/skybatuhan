@@ -22,7 +22,7 @@ import java.util.Set;
  * Owns every HUD box, draws them through Fabric's HUD registry and keeps their saved positions.
  */
 public final class HudManager {
-    private static final long LINE_REFRESH_MS = 1000L;
+    private static final long LINE_REFRESH_MS = 250L;
 
     private record CachedLines(List<String> lines, long builtAt) {
     }
@@ -103,7 +103,7 @@ public final class HudManager {
     }
 
     /**
-     * The text is rebuilt about once a second, not every frame.
+     * The text is rebuilt about four times a second, not every frame.
      */
     private static List<String> linesOf(HudElement element, long now) {
         CachedLines cached = cache.get(element.getId());
