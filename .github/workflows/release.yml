@@ -13,8 +13,8 @@ on:
   workflow_dispatch:
 
 env:
-  # Releases are created as drafts so you can check them before publishing.
-  # Change this to 'false' once the automation has proven itself.
+  # Releases are created as drafts on purpose: the in-game update check only sees published
+  # releases, so nobody is told about a version until you press Publish after checking it.
   RELEASE_AS_DRAFT: 'true'
 
 jobs:
@@ -132,6 +132,15 @@ jobs:
           JAR: ${{ steps.meta.outputs.jar }}
         run: |
           set -euo pipefail
+
+          # Link to the comparison with the previous release (nothing to link for the first one)
+          PREVIOUS=$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)
+          if [ -n "$PREVIOUS" ]; then
+            {
+              echo
+              echo "**Full Changelog**: https://github.com/$GH_REPO/compare/$PREVIOUS...$TAG"
+            } >> release-notes.md
+          fi
 
           FLAGS=(--verify-tag --latest --title "$TAG" --notes-file release-notes.md)
           if [ "$RELEASE_AS_DRAFT" = "true" ]; then
