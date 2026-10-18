@@ -493,16 +493,16 @@ public class ModConfig extends Config {
 
         public static class SessionBoxSettings {
             @Expose
-            @ConfigOption(name = "Show", desc = "Show this box on the screen. (default: on)")
+            @ConfigOption(name = "Show", desc = "Show this box on the screen. (default: off)")
             @ConfigEditorBoolean
-            public boolean enabled = true;
+            public boolean enabled = false;
         }
 
         public static class RunningBoxSettings {
             @Expose
-            @ConfigOption(name = "Show", desc = "Show this box on the screen. (default: on)")
+            @ConfigOption(name = "Show", desc = "Show this box on the screen. (default: off)")
             @ConfigEditorBoolean
-            public boolean enabled = true;
+            public boolean enabled = false;
 
             @Expose
             @ConfigOption(name = "Only While Running", desc = "Hide the box while the feature is off. (default: on)")
