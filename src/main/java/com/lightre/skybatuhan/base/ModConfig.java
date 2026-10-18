@@ -482,6 +482,11 @@ public class ModConfig extends Config {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Farming Profit", desc = "Coins per hour and total coins from Auto Farm, valued with Bazaar prices.")
+        public SessionBoxSettings farmProfit = new SessionBoxSettings();
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "Auto Fish", desc = "Status, run time and stop timer.")
         public RunningBoxSettings fish = new RunningBoxSettings();
 

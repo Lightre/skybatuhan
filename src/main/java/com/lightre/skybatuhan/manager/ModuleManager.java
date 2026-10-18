@@ -2,11 +2,15 @@ package com.lightre.skybatuhan.manager;
 
 import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.Feature;
+import com.lightre.skybatuhan.base.ModConfig;
 import com.lightre.skybatuhan.features.AutoFarmFeature;
 import com.lightre.skybatuhan.features.AutoFishFeature;
 import com.lightre.skybatuhan.features.DarkAuctionNotifier;
+import com.lightre.skybatuhan.economy.farming.FarmingProfitTracker;
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.notenoughupdates.moulconfig.common.IMinecraft;
+import io.github.notenoughupdates.moulconfig.gui.MoulConfigEditor;
+import io.github.notenoughupdates.moulconfig.managed.ManagedConfig;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
@@ -36,6 +40,9 @@ public class ModuleManager {
     private static KeyMapping addPointKey;
     private static KeyMapping setHomeKey;
     private static boolean menuOpen = false;
+    // The same editor is opened every time, so it comes back on the page (and scroll) it was closed on
+    private static MoulConfigEditor<ModConfig> editor;
+    private static ManagedConfig<ModConfig> editorOwner;
 
     public static void init() {
         registerFeature(farmFeature, "autofarm", GLFW.GLFW_KEY_CAPS_LOCK);
@@ -47,6 +54,8 @@ public class ModuleManager {
         menuKey = registerKey("menu", GLFW.GLFW_KEY_RIGHT_SHIFT);
         addPointKey = registerKey("addpoint", GLFW.GLFW_KEY_UNKNOWN);
         setHomeKey = registerKey("sethome", GLFW.GLFW_KEY_UNKNOWN);
+
+        FarmingProfitTracker.init();
     }
 
     public static void onTick(Minecraft client) {
@@ -62,6 +71,8 @@ public class ModuleManager {
             if (wasPressed(feature.getKeyBinding())) feature.toggle(client);
             if (feature.isEnabled()) feature.onTick(client);
         }
+
+        FarmingProfitTracker.onTick(client);
 
         if (wasPressed(addPointKey)) farmFeature.addWaypoint(client);
         if (wasPressed(setHomeKey)) farmFeature.setHomePoint(client);
@@ -81,7 +92,13 @@ public class ModuleManager {
             return;
         }
         Minecraft.getInstance().schedule(() -> {
-            IMinecraft.INSTANCE.openWrappedScreen(ConfigManager.getManaged().getEditor());
+            ManagedConfig<ModConfig> managed = ConfigManager.getManaged();
+            // A reloaded config is a new ManagedConfig, so the old editor must not be reused for it
+            if (editor == null || editorOwner != managed) {
+                editor = managed.getEditor();
+                editorOwner = managed;
+            }
+            IMinecraft.INSTANCE.openWrappedScreen(editor);
             menuOpen = true;
         });
     }

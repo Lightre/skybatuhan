@@ -2,6 +2,7 @@ package com.lightre.skybatuhan.hud;
 
 import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.hud.elements.FarmElement;
+import com.lightre.skybatuhan.hud.elements.FarmProfitElement;
 import com.lightre.skybatuhan.hud.elements.FishElement;
 import com.lightre.skybatuhan.hud.elements.SessionElement;
 import com.lightre.skybatuhan.manager.ConfigManager;
@@ -40,6 +41,7 @@ public final class HudManager {
 
         register(new SessionElement());
         register(new FarmElement());
+        register(new FarmProfitElement());
         register(new FishElement());
     }
 

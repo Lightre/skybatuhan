@@ -19,4 +19,15 @@ public final class HudFormat {
         if (minutes > 0) return String.format(Locale.ROOT, "%dm %02ds", minutes, seconds);
         return seconds + "s";
     }
+
+    /**
+     * 950, 12.5K, 1.24M or 3.10B.
+     */
+    public static String coins(double value) {
+        double abs = Math.abs(value);
+        if (abs >= 1_000_000_000d) return String.format(Locale.ROOT, "%.2fB", value / 1_000_000_000d);
+        if (abs >= 1_000_000d) return String.format(Locale.ROOT, "%.2fM", value / 1_000_000d);
+        if (abs >= 1_000d) return String.format(Locale.ROOT, "%.1fK", value / 1_000d);
+        return String.format(Locale.ROOT, "%.0f", value);
+    }
 }
