@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class FarmProfitElement extends HudElement {
     public FarmProfitElement() {
-        super("farm_profit", "Farming Profit", HudAnchor.TOP_LEFT, 4, 80);
+        super("farm_profit", "Farming Profit", HudAnchor.TOP_LEFT, 4, 114);
     }
 
     @Override
