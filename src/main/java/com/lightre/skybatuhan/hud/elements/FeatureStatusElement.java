@@ -1,7 +1,6 @@
 package com.lightre.skybatuhan.hud.elements;
 
 import com.lightre.skybatuhan.base.Feature;
-import com.lightre.skybatuhan.base.ModConfig;
 import com.lightre.skybatuhan.hud.HudAnchor;
 import com.lightre.skybatuhan.hud.HudElement;
 import com.lightre.skybatuhan.hud.HudFormat;
@@ -20,7 +19,12 @@ public abstract class FeatureStatusElement extends HudElement {
         this.feature = feature;
     }
 
-    protected abstract ModConfig.HudCategory.RunningBoxSettings settings();
+    /**
+     * The "Show" switch of this box.
+     */
+    protected abstract boolean boxShown();
+
+    protected abstract boolean onlyWhileRunning();
 
     protected abstract boolean timerEnabled();
 
@@ -41,12 +45,12 @@ public abstract class FeatureStatusElement extends HudElement {
 
     @Override
     public boolean isEnabled() {
-        return settings().enabled;
+        return boxShown();
     }
 
     @Override
     public boolean isActive() {
-        return !settings().onlyWhileRunning || feature.isEnabled() || needsDisplay();
+        return !onlyWhileRunning() || feature.isEnabled() || needsDisplay();
     }
 
     @Override

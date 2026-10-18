@@ -19,7 +19,7 @@ public class FarmProfitElement extends HudElement {
 
     @Override
     public boolean isEnabled() {
-        return ConfigManager.config.hud.farmProfit.enabled;
+        return ConfigManager.config.hud.farm.showProfit;
     }
 
     @Override

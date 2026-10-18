@@ -477,18 +477,20 @@ public class ModConfig extends Config {
 
         @Expose
         @Accordion
-        @ConfigOption(name = "Auto Farm", desc = "Status, run time, stop timer and reconnect progress.")
-        public RunningBoxSettings farm = new RunningBoxSettings();
-
-        @Expose
-        @Accordion
-        @ConfigOption(name = "Farming Profit", desc = "Coins per hour and total coins from Auto Farm, valued with Bazaar prices.")
-        public BoxSettings farmProfit = new BoxSettings();
+        @ConfigOption(name = "Auto Farm", desc = "Status, run time, stop timer, reconnect progress and the Farming Profit box.")
+        public FarmBoxSettings farm = new FarmBoxSettings();
 
         @Expose
         @Accordion
         @ConfigOption(name = "Auto Fish", desc = "Status, run time and stop timer.")
         public RunningBoxSettings fish = new RunningBoxSettings();
+
+        /**
+         * Older versions saved the Farming Profit switch here. ConfigManager moves it to farm.showProfit on load.
+         */
+        @Expose
+        @SerializedName("farmProfit")
+        public BoxSettings legacyFarmProfit = null;
 
         /**
          * Saved positions by box id. Only boxes the player moved are stored, the rest use their default.
@@ -501,6 +503,23 @@ public class ModConfig extends Config {
             @ConfigOption(name = "Show", desc = "Show this box on the screen. (default: off)")
             @ConfigEditorBoolean
             public boolean enabled = false;
+        }
+
+        public static class FarmBoxSettings {
+            @Expose
+            @ConfigOption(name = "Show", desc = "Show the status box on the screen. (default: off)")
+            @ConfigEditorBoolean
+            public boolean enabled = false;
+
+            @Expose
+            @ConfigOption(name = "Only While Running", desc = "Hide the status box while Auto Farm is off. (default: on)")
+            @ConfigEditorBoolean
+            public boolean onlyWhileRunning = true;
+
+            @Expose
+            @ConfigOption(name = "Show Farming Profit", desc = "Also show the Farming Profit box: coins per hour and total coins, valued with Bazaar prices. It has its own position. (default: off)")
+            @ConfigEditorBoolean
+            public boolean showProfit = false;
         }
 
         public static class RunningBoxSettings {
