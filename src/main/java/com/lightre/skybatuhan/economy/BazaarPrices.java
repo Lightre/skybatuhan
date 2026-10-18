@@ -32,6 +32,7 @@ public final class BazaarPrices {
     private static final URI ENDPOINT = URI.create("https://api.hypixel.net/v2/skyblock/bazaar");
     private static final long REFRESH_MS = 120_000L;
     private static final long RETRY_MS = 30_000L;
+    private static final long STUCK_MS = 90_000L;
 
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private static final AtomicBoolean fetching = new AtomicBoolean(false);
@@ -39,6 +40,7 @@ public final class BazaarPrices {
     private static volatile Map<String, Double> prices = Map.of();
     private static volatile long updatedAt = 0L;
     private static volatile long lastAttemptAt = 0L;
+    private static volatile long fetchStartedAt = 0L;
     private static volatile boolean missingReported = false;
 
     private BazaarPrices() {
@@ -61,8 +63,12 @@ public final class BazaarPrices {
     public static void refreshIfStale() {
         long now = System.currentTimeMillis();
         if (now - updatedAt < REFRESH_MS || now - lastAttemptAt < RETRY_MS) return;
+
+        // A request whose body stalled never finishes by itself: let a new one start
+        if (fetching.get() && now - fetchStartedAt > STUCK_MS) fetching.set(false);
         if (!fetching.compareAndSet(false, true)) return;
 
+        fetchStartedAt = now;
         lastAttemptAt = now;
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(ENDPOINT)
