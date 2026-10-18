@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.1
+
+### Fixes
+- Fix: the Farming Profit numbers are no longer wiped when Auto Farm stops by itself (stuck, stop timer, low health...); the last sack batch is still counted
+- Fix: the Farming Profit box no longer sits on top of the Auto Fish box by default
+- Fix: a Bazaar price update that stalls can no longer stop the prices from refreshing
+- Fix: a damaged config.json section could keep the rest of the settings from loading, which could let Auto Farm start by itself when the game launched
+
+### Changes
+- The Farming Profit switch moved into HUD > Auto Farm (your existing setting is moved over automatically)
+
 ## 1.7.0
 
 ### Features
@@ -14,29 +25,29 @@
 
 ### Features
 - New HUD tab with on-screen boxes: Session Time (time since the game was opened), Auto Farm and Auto Fish (status, run time, time left on the stop timer, and the reconnect progress for Auto Farm)
-- Position editor: drag the boxes where you want them (they snap to the screen margin, the center and each other), nudge with the arrow keys, reset one box or all of them. Open it from the HUD tab or with /sbh hud
+- Position editor: drag the boxes where you want them (they snap to the screen margin, the center and each other), nudge with the arrow keys, reset one box or all of them. Open it from the HUD tab or with `/sbh hud`
 - Boxes follow their screen corner, so they stay in place when the window or GUI scale changes
 - All HUD boxes are hidden with F1
 
 ### Changes
 - HUD boxes are off by default; the Auto Farm and Auto Fish boxes only show while the feature runs (can be changed)
-- /sbh help lists the new /sbh hud command
+- `/sbh help` lists the new `/sbh hud` command
 
 ## 1.5.0
 
 ### Features
-- New Safety tab: Auto Farm and Auto Fish now stop on low health, death or a sudden teleport (Auto Farm's own /home is ignored)
+- New Safety tab: Auto Farm and Auto Fish now stop on low health, death or a sudden teleport (Auto Farm's own `/home` is ignored)
 - "Leave Server On Stop" option: after any automatic stop the game waits a few seconds and leaves the server
 - Auto Stop Timer for Auto Farm and Auto Fish (counts only the time the feature is on; Auto Farm keeps its time across reconnects)
 - Discord heartbeat: a quiet "still running" message at an interval you choose
 - Discord message 5 minutes and 1 minute before a Dark Auction
 - The taskbar icon flashes on automatic stops, kicks, world changes and failed recoveries when the game is in the background
-- New commands: /sbh farm list, /sbh farm remove <id>, /sbh status, /sbh toggle <farm|fish> and /sbh help
+- New commands: `/sbh farm list`, `/sbh farm remove <id>`, `/sbh status`, `/sbh toggle <farm|fish>` and `/sbh help`
 
 ### Changes
 - Reconnect for Farming has its own tab, separate from Discord (your existing settings are moved over automatically)
 - Turning points are numbered by order; removing one moves the next ones up
-- /sbh farm clear now asks for confirmation
+- `/sbh farm` clear now asks for confirmation
 - Points are saved safely, and an unreadable points.json is kept as points.json.broken instead of being overwritten
 - Renamed the Auto Fish "Safety Settings" group to "Delays & Safety"
 
