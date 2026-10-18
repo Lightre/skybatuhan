@@ -2,6 +2,7 @@ package com.lightre.skybatuhan.manager;
 
 import com.lightre.skybatuhan.SkyBatuhan;
 import com.lightre.skybatuhan.base.Feature;
+import com.lightre.skybatuhan.hud.HudEditorScreen;
 import com.lightre.skybatuhan.util.ModInfo;
 import com.lightre.skybatuhan.util.FarmPoint;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -33,6 +34,10 @@ public class CommandManager {
             sbh.then(registerFarmCommands());
             sbh.then(literal("status").executes(CommandManager::status));
             sbh.then(literal("help").executes(CommandManager::help));
+            sbh.then(literal("hud").executes(_ -> {
+                HudEditorScreen.open();
+                return 1;
+            }));
             sbh.then(registerToggleCommands());
 
             dispatcher.register(sbh);
@@ -75,6 +80,7 @@ public class CommandManager {
         sendHelpLine(context, "/sbh", "Open the settings menu");
         sendHelpLine(context, "/sbh status", "Show what is running and the saved points");
         sendHelpLine(context, "/sbh toggle <farm|fish>", "Turn Auto Farm or Auto Fish on or off");
+        sendHelpLine(context, "/sbh hud", "Move the HUD boxes");
         sendHelpLine(context, "/sbh farm list", "List the turning points (click one to remove it)");
         sendHelpLine(context, "/sbh farm remove <id>", "Remove a turning point");
         sendHelpLine(context, "/sbh farm undo", "Remove the last turning point");

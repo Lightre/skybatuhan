@@ -4,6 +4,7 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.lightre.skybatuhan.base.enums.FishingOptions.*;
 import com.lightre.skybatuhan.hud.HudLayout;
+import com.lightre.skybatuhan.hud.HudEditorScreen;
 import com.lightre.skybatuhan.manager.Webhook;
 import com.lightre.skybatuhan.manager.UpdateManager;
 import com.lightre.skybatuhan.manager.SessionMonitor;
@@ -464,6 +465,10 @@ public class ModConfig extends Config {
         @ConfigOption(name = "HUD Enabled", desc = "Show the on-screen boxes. They are always hidden with F1. (default: on)")
         @ConfigEditorBoolean
         public boolean enabled = true;
+
+        @ConfigOption(name = "Edit Positions", desc = "Open the screen where you drag the boxes to where you want them. Also: /sbh hud")
+        @ConfigEditorButton(buttonText = "Edit")
+        public transient Runnable editPositions = HudEditorScreen::open;
 
         @Expose
         @Accordion
