@@ -1,6 +1,5 @@
 package com.lightre.skybatuhan.hud.elements;
 
-import com.lightre.skybatuhan.base.ModConfig;
 import com.lightre.skybatuhan.hud.HudAnchor;
 import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.manager.ModuleManager;
@@ -10,9 +9,15 @@ public class FishElement extends FeatureStatusElement {
         super("fish", ModuleManager.getFishFeature(), HudAnchor.TOP_LEFT, 4, 74);
     }
 
+    // FishElement
     @Override
-    protected ModConfig.HudCategory.RunningBoxSettings settings() {
-        return ConfigManager.config.hud.fish;
+    protected boolean boxShown() {
+        return ConfigManager.config.hud.fish.enabled;
+    }
+
+    @Override
+    protected boolean onlyWhileRunning() {
+        return ConfigManager.config.hud.fish.onlyWhileRunning;
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.lightre.skybatuhan.hud.elements;
 
-import com.lightre.skybatuhan.base.ModConfig;
 import com.lightre.skybatuhan.hud.HudAnchor;
 import com.lightre.skybatuhan.manager.ConfigManager;
 import com.lightre.skybatuhan.manager.ModuleManager;
@@ -13,9 +12,15 @@ public class FarmElement extends FeatureStatusElement {
         super("farm", ModuleManager.getFarmFeature(), HudAnchor.TOP_LEFT, 4, 24);
     }
 
+    // FarmElement
     @Override
-    protected ModConfig.HudCategory.RunningBoxSettings settings() {
-        return ConfigManager.config.hud.farm;
+    protected boolean boxShown() {
+        return ConfigManager.config.hud.farm.enabled;
+    }
+
+    @Override
+    protected boolean onlyWhileRunning() {
+        return ConfigManager.config.hud.farm.onlyWhileRunning;
     }
 
     @Override
