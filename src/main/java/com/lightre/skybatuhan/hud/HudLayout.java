@@ -31,6 +31,17 @@ public class HudLayout {
         return copy;
     }
 
+    public void copyFrom(HudLayout other) {
+        anchor = other.anchor;
+        offsetX = other.offsetX;
+        offsetY = other.offsetY;
+        scale = other.scale;
+    }
+
+    public boolean sameAs(HudLayout other) {
+        return anchor == other.anchor && offsetX == other.offsetX && offsetY == other.offsetY && scale == other.scale;
+    }
+
     /**
      * Left edge of a box of this width, kept fully on screen.
      */
