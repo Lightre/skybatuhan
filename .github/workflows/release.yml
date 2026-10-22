@@ -41,8 +41,9 @@ jobs:
 
           VERSION=$(grep '^mod_version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')
           BASE=$(grep '^archives_base_name=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')
-          if [ -z "$VERSION" ] || [ -z "$BASE" ]; then
-            echo "::error::Could not read mod_version or archives_base_name from gradle.properties"
+          MC=$(grep '^minecraft_version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')
+          if [ -z "$MC" ]; then
+            echo "::error::Could not read minecraft_version from gradle.properties"
             exit 1
           fi
 
@@ -67,6 +68,8 @@ jobs:
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "jar=build/libs/$BASE-$VERSION.jar" >> "$GITHUB_OUTPUT"
+          echo "title=SkyBatuhan v$VERSION for $MC" >> "$GITHUB_OUTPUT"
+          echo "Release title: SkyBatuhan v$VERSION for $MC" >> "$GITHUB_STEP_SUMMARY"
 
       - name: extract the release notes
         env:
@@ -129,6 +132,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
+          TITLE: ${{ steps.meta.outputs.title }}
           JAR: ${{ steps.meta.outputs.jar }}
         run: |
           set -euo pipefail
@@ -142,7 +146,7 @@ jobs:
             } >> release-notes.md
           fi
 
-          FLAGS=(--verify-tag --latest --title "$TAG" --notes-file release-notes.md)
+          FLAGS=(--verify-tag --latest --title "$TITLE" --notes-file release-notes.md)
           if [ "$RELEASE_AS_DRAFT" = "true" ]; then
             FLAGS+=(--draft)
           fi
