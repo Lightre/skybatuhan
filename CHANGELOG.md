@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.0
+
+### Features
+- Add Auto Farm session history with the last 10 sessions, duration, earnings, item counts, coins/hour and stop reason
+- Add `/sbh sessions` to view completed Auto Farm sessions
+- Verify the Garden scoreboard after reconnect commands before resuming Auto Farm
+- Count a failed Garden verification as a reconnect attempt, then disconnect and retry
+- Add a configurable Garden verification timeout
+
 ## 1.7.1
 
 ### Fixes

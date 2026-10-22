@@ -217,12 +217,14 @@ public class AutoFarmFeature extends Feature {
     @Override
     public void onToggle(Minecraft client, boolean state) {
         if (state && client.player != null) {
+            FarmSessionHistory.onFarmStarted(SessionMonitor.isRecovering());
             lastPos = new Vec3(client.player.getX(), client.player.getY(), client.player.getZ());
             lastMovementTime = System.currentTimeMillis();
             alarmTriggered = false;
             homeCommandDone = false;
             landing = false;
         } else {
+            FarmSessionHistory.onFarmStopped(getRunTimeMs(), FarmSessionHistory.consumeStopReason(), SessionMonitor.isRecovering());
             if (landing) {
                 client.options.keyShift.setDown(false);
                 landing = false;

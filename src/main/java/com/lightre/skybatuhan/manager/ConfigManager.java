@@ -98,6 +98,7 @@ public class ConfigManager {
             config.fishing.safety.stopAfterMinutes = Math.clamp(config.fishing.safety.stopAfterMinutes, 1, 480);
 
             config.discord.heartbeatMinutes = Math.clamp(config.discord.heartbeatMinutes, 1, 180);
+            config.reconnect.gardenCheckTimeoutSeconds = Math.clamp(config.reconnect.gardenCheckTimeoutSeconds, 15, 120);
 
             config.guard.healthPercent = Math.clamp(config.guard.healthPercent, 0, 90);
             config.guard.teleportDistance = Math.max(0, config.guard.teleportDistance);

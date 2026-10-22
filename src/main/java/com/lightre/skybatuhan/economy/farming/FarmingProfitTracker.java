@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -301,6 +302,15 @@ public final class FarmingProfitTracker {
             total += entry.getValue() * BazaarPrices.priceOf(item.priceId()) / item.divisor();
         }
         return total;
+    }
+
+    /** Snapshot of item quantities credited during the current farming session. */
+    public static Map<String, Long> getGainedItems() {
+        Map<String, Long> result = new TreeMap<>();
+        for (Map.Entry<FarmingItems.Item, Long> entry : gained.entrySet()) {
+            result.put(entry.getKey().name(), entry.getValue());
+        }
+        return Map.copyOf(result);
     }
 
     // ---------------------------------------------------------------- shown numbers

@@ -16,6 +16,7 @@ import net.minecraft.client.gui.screens.DisconnectedScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.scores.DisplaySlot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +38,7 @@ public class SessionMonitor {
 
     private enum State {
         IDLE, WAIT_BEFORE,                  // random wait, then reconnect or run the commands
-        CONNECTING, RUN_COMMANDS, COOLDOWN  // failed attempt limit reached inside the window
+        CONNECTING, RUN_COMMANDS, VERIFY_GARDEN, COOLDOWN  // failed attempt limit reached inside the window
     }
 
     private static final long QUICK_FAIL_MS = 5 * 60 * 1000L;   // trouble this soon after resuming = failed attempt
@@ -133,6 +134,7 @@ public class SessionMonitor {
             case WAIT_BEFORE -> "Waiting " + secondsLeft + "s";
             case CONNECTING -> "Connecting";
             case RUN_COMMANDS -> "Joining (" + commands.size() + " command(s) left)";
+            case VERIFY_GARDEN -> "Checking Garden";
             case COOLDOWN -> "Paused, about " + (secondsLeft / 60 + 1) + " min left";
         };
     }
@@ -198,7 +200,7 @@ public class SessionMonitor {
                 lastHandledScreen = screen;
                 onAttemptFailed(client, "Could not connect", readScreenText(screen));
             }
-            case WAIT_BEFORE, RUN_COMMANDS -> {
+            case WAIT_BEFORE, RUN_COMMANDS, VERIFY_GARDEN -> {
                 lastHandledScreen = screen;
                 onAttemptFailed(client, "Kicked during recovery", readScreenText(screen));
             }
@@ -249,7 +251,9 @@ public class SessionMonitor {
         ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
         long now = System.currentTimeMillis();
 
+        FarmSessionHistory.preserveForRecovery();
         stopFarm(client);
+        FarmSessionHistory.preserveForRecovery();
         commands.clear();
 
         // Trouble again soon after a recovery that looked fine: that recovery did not really work
@@ -309,6 +313,9 @@ public class SessionMonitor {
     }
 
     private static void cancelRecovery(String reason) {
+        if (!ModuleManager.getFarmFeature().isEnabled()) {
+            FarmSessionHistory.onFarmStopped(ModuleManager.getFarmFeature().getRunTimeMs(), "Recovery cancelled: " + reason, false);
+        }
         state = State.IDLE;
         wantReconnect = false;
         commands.clear();
@@ -335,6 +342,7 @@ public class SessionMonitor {
         wantReconnect = false;
         commands.clear();
         lastResumeAt = 0L;
+        FarmSessionHistory.onFarmStopped(ModuleManager.getFarmFeature().getRunTimeMs(), reason, false);
         report("Aborted. " + reason);
     }
 
@@ -347,6 +355,8 @@ public class SessionMonitor {
             farm.resetDirection(); // /warp starts at the farm's beginning
             farm.resume(client);
             farm.startLanding();
+        } else {
+            FarmSessionHistory.onFarmStopped(ModuleManager.getFarmFeature().getRunTimeMs(), "Farm not resumed", false);
         }
 
         state = State.IDLE;
@@ -452,15 +462,50 @@ public class SessionMonitor {
 
                 String command = commands.poll();
                 if (command == null) {
-                    finishRecovery(client, cfg);
+                    schedule(State.VERIFY_GARDEN, Math.max(15, cfg.gardenCheckTimeoutSeconds) * 1000L);
                     return;
                 }
                 sendCommand(client, command);
                 schedule(State.RUN_COMMANDS, randomMs(cfg.settleMinSeconds, cfg.settleMaxSeconds));
             }
+            case VERIFY_GARDEN -> {
+                if (!connected) {
+                    awayDuringCommands = true;
+                    if (!inGame && now > Math.max(leftGameAt, nextActionAt) + GAP_TOLERANCE_MS) {
+                        onAttemptFailed(client, "Lost connection while checking the Garden", null);
+                    }
+                    return;
+                }
+                if (isGardenScoreboard(client)) {
+                    finishRecovery(client, cfg);
+                } else if (now >= nextActionAt) {
+                    LOG.warn("Garden was not detected on the scoreboard; disconnecting to retry");
+                    if (client.getConnection() != null) {
+                        client.getConnection().getConnection().disconnect(Component.literal("SkyBatuhan could not verify the Garden"));
+                    } else {
+                        onAttemptFailed(client, "Garden verification timed out", null);
+                    }
+                }
+            }
             default -> {
             }
         }
+    }
+
+    private static boolean isGardenScoreboard(Minecraft client) {
+        if (client.level == null) return false;
+        var objective = client.level.getScoreboard().getDisplayObjective(DisplaySlot.SIDEBAR);
+        if (objective == null) return false;
+        String title = objective.getDisplayName().getString().toLowerCase(Locale.ROOT);
+        if (title.contains("garden")) return true;
+        for (var score : client.level.getScoreboard().listPlayerScores(objective)) {
+            String owner = score.owner();
+            var team = client.level.getScoreboard().getPlayersTeam(owner);
+            String line = (team == null ? "" : team.getPlayerPrefix().getString()) + owner
+                    + (team == null ? "" : team.getPlayerSuffix().getString());
+            if (line.replaceAll("§.", "").toLowerCase(Locale.ROOT).contains("garden")) return true;
+        }
+        return false;
     }
 
     /**
