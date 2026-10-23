@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.1
+
+### Fixes
+- Exclude SkyBlock armor stand indicators from Auto Fish entity hook recovery to prevent premature reeling
+
 ## 1.8.0
 
 ### Features
