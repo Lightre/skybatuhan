@@ -127,6 +127,53 @@ public class ModConfig extends Config {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Pest Farming", desc = "")
+        public PestFarmingCategory pestFarming = new PestFarmingCategory();
+
+        // Migrate the previous flat Pest Farming settings into the accordion.
+        @Expose
+        @SerializedName("pestFarmingEnabled")
+        public Boolean legacyPestFarmingEnabled;
+
+        public static class PestFarmingCategory {
+            @Expose
+            @ConfigOption(name = "Enabled", desc = "Switch loadouts only while Auto Farm is running. Uses its own cooldown timer and actual pest spawn messages. Initial sync uses the Pests widget (/widget) or the first pest spawn.")
+            @ConfigEditorBoolean
+            public boolean enabled = false;
+
+            @Expose
+            @ConfigOption(name = "Pest Cooldown (s)", desc = "Custom cooldown after each pest spawn. This estimates when pests become eligible to spawn. (default: 135s)")
+            @ConfigEditorSlider(minValue = 75f, maxValue = 300f, minStep = 5f)
+            public int cooldownSeconds = 135;
+
+            @Expose
+            @ConfigOption(name = "Finnegan Pest Eradicator", desc = "Enable manually while Finnegan's Pest Eradicator perk is active to use the separate cooldown below.")
+            @ConfigEditorBoolean
+            public boolean finneganPestEradicator = false;
+
+            @Expose
+            @ConfigOption(name = "Finnegan Cooldown (s)", desc = "Custom cooldown while the Pest Eradicator option is enabled. (default: 75s)")
+            @ConfigEditorSlider(minValue = 75f, maxValue = 300f, minStep = 5f)
+            public int finneganCooldownSeconds = 75;
+
+            @Expose
+            @ConfigOption(name = "Swap Before Cooldown End (s)", desc = "Select the pest loadout this many seconds before the cooldown ends. Wait for the actual spawn message before selecting the farm loadout. (default: 5s)")
+            @ConfigEditorSlider(minValue = 1f, maxValue = 30f, minStep = 1f)
+            public int swapBeforeSeconds = 5;
+
+            @Expose
+            @ConfigOption(name = "Pest Loadout Name", desc = "Enter the exact pest loadout name shown in /loadouts. Colors and letter case are ignored.")
+            @ConfigEditorText
+            public String pestLoadoutName = "";
+
+            @Expose
+            @ConfigOption(name = "Farm Loadout Name", desc = "Enter the exact farming loadout name shown in /loadouts. Colors and letter case are ignored.")
+            @ConfigEditorText
+            public String farmLoadoutName = "";
+        }
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "General Settings", desc = "")
         public GeneralSettings general = new GeneralSettings();
 
