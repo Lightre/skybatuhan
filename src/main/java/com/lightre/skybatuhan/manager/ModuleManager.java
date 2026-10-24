@@ -50,7 +50,7 @@ public class ModuleManager {
         registerFeature(farmFeature, "autofarm", GLFW.GLFW_KEY_CAPS_LOCK);
         registerFeature(fishFeature, "autofish", GLFW.GLFW_KEY_UNKNOWN);
 
-        bindings.add(new ConfigBinding(() -> ConfigManager.config.farming.autoFarmEnabled, value -> ConfigManager.config.farming.autoFarmEnabled = value, farmFeature::isEnabled, farmFeature::setState));
+        bindings.add(new ConfigBinding(() -> ConfigManager.config.farming.autoFarmEnabled, value -> ConfigManager.config.farming.autoFarmEnabled = value, farmFeature::isEnabled, farmFeature::setManuallyEnabled));
         bindings.add(new ConfigBinding(() -> ConfigManager.config.farming.pestFarming.enabled, value -> ConfigManager.config.farming.pestFarming.enabled = value, pestFarmingFeature::isEnabled, pestFarmingFeature::setState));
         bindings.add(new ConfigBinding(() -> ConfigManager.config.fishing.autoFishEnabled, value -> ConfigManager.config.fishing.autoFishEnabled = value, fishFeature::isEnabled, fishFeature::setState));
 
@@ -72,9 +72,6 @@ public class ModuleManager {
 
         for (Feature feature : features) {
             if (wasPressed(feature.getKeyBinding())) {
-                if (feature == farmFeature && feature.isEnabled()) {
-                    PestFarmingFeature.onManualAutoFarmStop(client);
-                }
                 feature.toggle(client);
             }
             if (feature.isEnabled()) feature.onTick(client);
