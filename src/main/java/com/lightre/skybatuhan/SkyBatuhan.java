@@ -15,7 +15,6 @@ public class SkyBatuhan implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ConfigManager.load();
-        FarmSessionHistory.load();
         PointConfigManager.load();
         ModuleManager.init();
         CommandManager.init();
@@ -24,10 +23,6 @@ public class SkyBatuhan implements ClientModInitializer {
         HudManager.init();
 
         ClientTickEvents.END_CLIENT_TICK.register(ModuleManager::onTick);
-        ClientLifecycleEvents.CLIENT_STOPPING.register(_ -> {
-            FarmSessionHistory.finishOnGameClose();
-            ConfigManager.save();
-        });
-        ClientTickEvents.END_CLIENT_TICK.register(_ -> FarmSessionHistory.onTick());
+        ClientLifecycleEvents.CLIENT_STOPPING.register(_ -> ConfigManager.save());
     }
 }

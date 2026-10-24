@@ -99,7 +99,6 @@ public final class SafetyManager {
         var farm = ModuleManager.getFarmFeature();
         var fish = ModuleManager.getFishFeature();
 
-        if (farm.isEnabled()) FarmSessionHistory.setNextStopReason(reason);
         if (farm.isEnabled()) farm.setState(client, false);
         if (fish.isEnabled()) fish.setState(client, false);
         farm.resetRunTime();
@@ -114,7 +113,6 @@ public final class SafetyManager {
      * @param allowLeave false when something else decides what happens next (e.g. the session monitor)
      */
     public static void autoStop(Minecraft client, Feature feature, String reason, boolean allowLeave) {
-        if (feature == ModuleManager.getFarmFeature()) FarmSessionHistory.setNextStopReason(reason);
         if (feature.isEnabled()) feature.setState(client, false);
         feature.resetRunTime();
         announce(client, feature.getName(), reason, allowLeave);

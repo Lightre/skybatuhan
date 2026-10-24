@@ -251,9 +251,7 @@ public class SessionMonitor {
         ModConfig.ReconnectCategory cfg = ConfigManager.config.reconnect;
         long now = System.currentTimeMillis();
 
-        FarmSessionHistory.preserveForRecovery();
         stopFarm(client);
-        FarmSessionHistory.preserveForRecovery();
         commands.clear();
 
         // Trouble again soon after a recovery that looked fine: that recovery did not really work
@@ -313,9 +311,6 @@ public class SessionMonitor {
     }
 
     private static void cancelRecovery(String reason) {
-        if (!ModuleManager.getFarmFeature().isEnabled()) {
-            FarmSessionHistory.onFarmStopped(ModuleManager.getFarmFeature().getRunTimeMs(), "Recovery cancelled: " + reason, false);
-        }
         state = State.IDLE;
         wantReconnect = false;
         commands.clear();
@@ -342,7 +337,6 @@ public class SessionMonitor {
         wantReconnect = false;
         commands.clear();
         lastResumeAt = 0L;
-        FarmSessionHistory.onFarmStopped(ModuleManager.getFarmFeature().getRunTimeMs(), reason, false);
         report("Aborted. " + reason);
     }
 
@@ -355,8 +349,6 @@ public class SessionMonitor {
             farm.resetDirection(); // /warp starts at the farm's beginning
             farm.resume(client);
             farm.startLanding();
-        } else {
-            FarmSessionHistory.onFarmStopped(ModuleManager.getFarmFeature().getRunTimeMs(), "Farm not resumed", false);
         }
 
         state = State.IDLE;
