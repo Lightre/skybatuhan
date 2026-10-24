@@ -25,6 +25,7 @@ public class PestFarmingFeature extends Feature {
     private long clickAt;
     private long commandAt;
     private long menuDeadline;
+    private int loadoutContainerId = -1;
     private boolean farmWasRunning;
     private boolean spawnPending;
     private boolean menuReady;
@@ -78,6 +79,7 @@ public class PestFarmingFeature extends Feature {
         waitingForInitialSync = false;
         spawnPending = false;
         farmWasRunning = false;
+        loadoutContainerId = -1;
     }
 
     private void tickCooldown(Minecraft client) {
@@ -197,9 +199,17 @@ public class PestFarmingFeature extends Feature {
         }
         if (phase == Phase.WAIT_PEST_MENU_CLOSE || phase == Phase.WAIT_FARM_MENU_CLOSE) {
             if (client.gui.screen() != null) {
+                if (!(client.gui.screen() instanceof AbstractContainerScreen<?> screen)
+                        || screen.getMenu().containerId != loadoutContainerId) return;
                 if (System.currentTimeMillis() < menuDeadline) return;
-                client.gui.setScreen(null);
+                screen.onClose();
             }
+            if (client.player.containerMenu != client.player.inventoryMenu) {
+                if (client.gui.screen() != null || client.player.containerMenu.containerId != loadoutContainerId) return;
+                client.player.closeContainer();
+            }
+            if (client.gui.screen() != null || client.player.containerMenu != client.player.inventoryMenu) return;
+            loadoutContainerId = -1;
             if (phase == Phase.WAIT_FARM_MENU_CLOSE) {
                 phase = Phase.IDLE;
                 farmWasRunning = false;
@@ -253,6 +263,7 @@ public class PestFarmingFeature extends Feature {
         if (System.currentTimeMillis() < clickAt) return;
 
         String chosenName = selectedLoadoutName();
+        loadoutContainerId = screen.getMenu().containerId;
         client.gameMode.handleContainerInput(screen.getMenu().containerId, target.index, 0, ContainerInput.PICKUP, client.player);
         boolean pestLoadout = phase == Phase.OPEN_PEST_MENU;
         phase = pestLoadout ? Phase.WAIT_PEST_MENU_CLOSE : Phase.WAIT_FARM_MENU_CLOSE;
