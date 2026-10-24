@@ -29,6 +29,17 @@ public class AutoFarmFeature extends Feature {
         super("Auto Farm");
     }
 
+    @Override
+    public void toggle(Minecraft client) {
+        setManuallyEnabled(client, !isEnabled());
+    }
+
+    public void setManuallyEnabled(Minecraft client, boolean state) {
+        boolean manuallyStopped = isEnabled() && !state;
+        setState(client, state);
+        if (manuallyStopped) PestFarmingFeature.onManualAutoFarmStop(client);
+    }
+
     /**
      * Time of the last stuck stop (the session monitor uses it to spot a failed recovery).
      */

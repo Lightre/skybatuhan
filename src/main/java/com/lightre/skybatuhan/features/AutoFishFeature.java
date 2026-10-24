@@ -281,7 +281,13 @@ public class AutoFishFeature extends Feature {
 
     // ================= ENTITY HOOK RECOVERY =================
     private boolean isEntityNotHooked(Minecraft client) {
-        return client.player == null || client.player.fishing == null || client.player.fishing.getHookedIn() == null;
+        if (client.player == null || client.player.fishing == null) return true;
+
+        Entity hookedEntity = client.player.fishing.getHookedIn();
+        // SkyBlock uses armor stands as fishing indicators, not recovery targets.
+        return hookedEntity == null
+                || (ConfigManager.config.fishing.general.fishMode == FishMode.SKYBLOCK
+                && hookedEntity instanceof ArmorStand);
     }
 
     private void handleEntityHookRecovery(Minecraft client) {

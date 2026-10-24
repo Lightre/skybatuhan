@@ -21,8 +21,10 @@
 
 - Customizable Auto-Farming and Auto-Fishing feature.
 - Auto-reconnect: rejoins after kicks/world changes, runs join/warp commands, and resumes farming.
+- Pest Farming loadout switching with a local cooldown timer and actual pest spawn messages. Initial sync uses the Pests widget (`/widget`) or the first pest spawn; Finnegan's Pest Eradicator cooldown can be selected in settings.
 - Discord alerts for disconnects and world changes during farming or fishing.
 - Dark Auction notifier.
+- Garden verification after reconnect.
 
 ## Prerequisites
 

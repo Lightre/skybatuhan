@@ -127,6 +127,53 @@ public class ModConfig extends Config {
 
         @Expose
         @Accordion
+        @ConfigOption(name = "Pest Farming", desc = "")
+        public PestFarmingCategory pestFarming = new PestFarmingCategory();
+
+        // Migrate the previous flat Pest Farming settings into the accordion.
+        @Expose
+        @SerializedName("pestFarmingEnabled")
+        public Boolean legacyPestFarmingEnabled;
+
+        public static class PestFarmingCategory {
+            @Expose
+            @ConfigOption(name = "Enabled", desc = "Switch loadouts only while Auto Farm is running. Uses its own cooldown timer and actual pest spawn messages. Initial sync uses the Pests widget (/widget) or the first pest spawn.")
+            @ConfigEditorBoolean
+            public boolean enabled = false;
+
+            @Expose
+            @ConfigOption(name = "Pest Cooldown (s)", desc = "Custom cooldown after each pest spawn. This estimates when pests become eligible to spawn. (default: 135s)")
+            @ConfigEditorSlider(minValue = 75f, maxValue = 300f, minStep = 5f)
+            public int cooldownSeconds = 135;
+
+            @Expose
+            @ConfigOption(name = "Finnegan Pest Eradicator", desc = "Enable manually while Finnegan's Pest Eradicator perk is active to use the separate cooldown below.")
+            @ConfigEditorBoolean
+            public boolean finneganPestEradicator = false;
+
+            @Expose
+            @ConfigOption(name = "Finnegan Cooldown (s)", desc = "Custom cooldown while the Pest Eradicator option is enabled. (default: 75s)")
+            @ConfigEditorSlider(minValue = 75f, maxValue = 300f, minStep = 5f)
+            public int finneganCooldownSeconds = 75;
+
+            @Expose
+            @ConfigOption(name = "Swap Before Cooldown End (s)", desc = "Select the pest loadout this many seconds before the cooldown ends. Wait for the actual spawn message before selecting the farm loadout. (default: 5s)")
+            @ConfigEditorSlider(minValue = 1f, maxValue = 30f, minStep = 1f)
+            public int swapBeforeSeconds = 5;
+
+            @Expose
+            @ConfigOption(name = "Pest Loadout Name", desc = "Enter the exact pest loadout name shown in /loadouts. Colors and letter case are ignored.")
+            @ConfigEditorText
+            public String pestLoadoutName = "";
+
+            @Expose
+            @ConfigOption(name = "Farm Loadout Name", desc = "Enter the exact farming loadout name shown in /loadouts. Colors and letter case are ignored.")
+            @ConfigEditorText
+            public String farmLoadoutName = "";
+        }
+
+        @Expose
+        @Accordion
         @ConfigOption(name = "General Settings", desc = "")
         public GeneralSettings general = new GeneralSettings();
 
@@ -382,6 +429,16 @@ public class ModConfig extends Config {
         @ConfigOption(name = "Settle Max (s)", desc = "Longest wait after joining and after each command. (default: 15s)")
         @ConfigEditorSlider(minValue = 3f, maxValue = 60f, minStep = 1f)
         public int settleMaxSeconds = 15;
+
+        @Expose
+        @ConfigOption(name = "Garden Scoreboard Check", desc = "Verify the Garden scoreboard after /warp garden before resuming Auto Farm.")
+        @ConfigEditorBoolean
+        public boolean gardenScoreboardCheck = true;
+
+        @Expose
+        @ConfigOption(name = "Garden Check Timeout (s)", desc = "How long to wait for the Garden scoreboard after /warp garden. A timeout counts as a failed attempt.")
+        @ConfigEditorSlider(minValue = 15f, maxValue = 120f, minStep = 5f)
+        public int gardenCheckTimeoutSeconds = 45;
 
         @Expose
         @ConfigOption(name = "Lobby Command", desc = "Sent first when the world changed but you are still connected. Leave empty to skip.")

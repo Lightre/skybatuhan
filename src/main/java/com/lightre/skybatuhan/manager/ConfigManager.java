@@ -51,6 +51,11 @@ public class ConfigManager {
             if (config.guard == null) config.guard = new ModConfig.GuardCategory();
 
             if (config.farming == null) config.farming = new ModConfig.FarmingCategory();
+            if (config.farming.pestFarming == null) config.farming.pestFarming = new ModConfig.FarmingCategory.PestFarmingCategory();
+            if (config.farming.legacyPestFarmingEnabled != null) {
+                config.farming.pestFarming.enabled = config.farming.legacyPestFarmingEnabled;
+                config.farming.legacyPestFarmingEnabled = null;
+            }
             if (config.farming.general == null)
                 config.farming.general = new ModConfig.FarmingCategory.GeneralSettings();
             if (config.farming.safety == null) config.farming.safety = new ModConfig.FarmingCategory.SafetyCategory();
@@ -93,11 +98,15 @@ public class ConfigManager {
             config.farming.safety.timeoutMs = Math.max(500, config.farming.safety.timeoutMs);
             config.farming.safety.threshold = Math.max(0.1, config.farming.safety.threshold);
             config.farming.general.pointRange = Math.max(0.1, config.farming.general.pointRange);
+            config.farming.pestFarming.cooldownSeconds = Math.clamp(config.farming.pestFarming.cooldownSeconds, 75, 300);
+            config.farming.pestFarming.finneganCooldownSeconds = Math.clamp(config.farming.pestFarming.finneganCooldownSeconds, 75, 300);
+            config.farming.pestFarming.swapBeforeSeconds = Math.clamp(config.farming.pestFarming.swapBeforeSeconds, 1, 30);
 
             config.farming.safety.stopAfterMinutes = Math.clamp(config.farming.safety.stopAfterMinutes, 1, 480);
             config.fishing.safety.stopAfterMinutes = Math.clamp(config.fishing.safety.stopAfterMinutes, 1, 480);
 
             config.discord.heartbeatMinutes = Math.clamp(config.discord.heartbeatMinutes, 1, 180);
+            config.reconnect.gardenCheckTimeoutSeconds = Math.clamp(config.reconnect.gardenCheckTimeoutSeconds, 15, 120);
 
             config.guard.healthPercent = Math.clamp(config.guard.healthPercent, 0, 90);
             config.guard.teleportDistance = Math.max(0, config.guard.teleportDistance);
@@ -105,11 +114,13 @@ public class ConfigManager {
             if (!firstLoadDone) {
                 // Features must never start by themselves when the game launches
                 config.farming.autoFarmEnabled = false;
+                config.farming.pestFarming.enabled = false;
                 config.fishing.autoFishEnabled = false;
                 firstLoadDone = true;
             } else {
                 // Reload: keep the real on/off state, otherwise the menu sync would switch the features off
                 config.farming.autoFarmEnabled = ModuleManager.getFarmFeature().isEnabled();
+                config.farming.pestFarming.enabled = ModuleManager.getPestFarmingFeature().isEnabled();
                 config.fishing.autoFishEnabled = ModuleManager.getFishFeature().isEnabled();
             }
 

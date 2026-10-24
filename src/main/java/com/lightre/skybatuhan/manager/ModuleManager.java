@@ -5,6 +5,7 @@ import com.lightre.skybatuhan.base.Feature;
 import com.lightre.skybatuhan.base.ModConfig;
 import com.lightre.skybatuhan.features.AutoFarmFeature;
 import com.lightre.skybatuhan.features.AutoFishFeature;
+import com.lightre.skybatuhan.features.PestFarmingFeature;
 import com.lightre.skybatuhan.features.DarkAuctionNotifier;
 import com.lightre.skybatuhan.economy.farming.FarmingProfitTracker;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -31,6 +32,7 @@ public class ModuleManager {
 
     private static final AutoFarmFeature farmFeature = new AutoFarmFeature();
     private static final AutoFishFeature fishFeature = new AutoFishFeature();
+    private static final PestFarmingFeature pestFarmingFeature = new PestFarmingFeature();
 
     private static final List<Feature> features = new ArrayList<>();
     private static final List<ConfigBinding> bindings = new ArrayList<>();
@@ -48,7 +50,8 @@ public class ModuleManager {
         registerFeature(farmFeature, "autofarm", GLFW.GLFW_KEY_CAPS_LOCK);
         registerFeature(fishFeature, "autofish", GLFW.GLFW_KEY_UNKNOWN);
 
-        bindings.add(new ConfigBinding(() -> ConfigManager.config.farming.autoFarmEnabled, value -> ConfigManager.config.farming.autoFarmEnabled = value, farmFeature::isEnabled, farmFeature::setState));
+        bindings.add(new ConfigBinding(() -> ConfigManager.config.farming.autoFarmEnabled, value -> ConfigManager.config.farming.autoFarmEnabled = value, farmFeature::isEnabled, farmFeature::setManuallyEnabled));
+        bindings.add(new ConfigBinding(() -> ConfigManager.config.farming.pestFarming.enabled, value -> ConfigManager.config.farming.pestFarming.enabled = value, pestFarmingFeature::isEnabled, pestFarmingFeature::setState));
         bindings.add(new ConfigBinding(() -> ConfigManager.config.fishing.autoFishEnabled, value -> ConfigManager.config.fishing.autoFishEnabled = value, fishFeature::isEnabled, fishFeature::setState));
 
         menuKey = registerKey("menu", GLFW.GLFW_KEY_RIGHT_SHIFT);
@@ -68,9 +71,12 @@ public class ModuleManager {
         DarkAuctionNotifier.onTick(client);
 
         for (Feature feature : features) {
-            if (wasPressed(feature.getKeyBinding())) feature.toggle(client);
+            if (wasPressed(feature.getKeyBinding())) {
+                feature.toggle(client);
+            }
             if (feature.isEnabled()) feature.onTick(client);
         }
+        if (pestFarmingFeature.isEnabled()) pestFarmingFeature.onTick(client);
 
         FarmingProfitTracker.onTick(client);
 
@@ -80,6 +86,10 @@ public class ModuleManager {
 
     public static AutoFarmFeature getFarmFeature() {
         return farmFeature;
+    }
+
+    public static PestFarmingFeature getPestFarmingFeature() {
+        return pestFarmingFeature;
     }
 
     public static AutoFishFeature getFishFeature() {
