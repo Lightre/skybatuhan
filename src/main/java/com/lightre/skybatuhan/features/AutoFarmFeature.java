@@ -223,6 +223,9 @@ public class AutoFarmFeature extends Feature {
             homeCommandDone = false;
             landing = false;
         } else {
+            if (!ConfigManager.config.farming.autoFarmEnabled) {
+                PestFarmingFeature.onManualAutoFarmStop(client);
+            }
             if (landing) {
                 client.options.keyShift.setDown(false);
                 landing = false;
