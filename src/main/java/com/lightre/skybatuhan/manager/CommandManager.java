@@ -33,7 +33,6 @@ public class CommandManager {
             sbh.then(literal("reload").executes(CommandManager::reloadConfigs));
             sbh.then(registerFarmCommands());
             sbh.then(literal("status").executes(CommandManager::status));
-            sbh.then(literal("sessions").executes(CommandManager::sessions));
             sbh.then(literal("help").executes(CommandManager::help));
             sbh.then(literal("hud").executes(_ -> {
                 HudEditorScreen.open();
@@ -80,7 +79,6 @@ public class CommandManager {
         sendMessage(context, PREFIX + "§fCommands:");
         sendHelpLine(context, "/sbh", "Open the settings menu");
         sendHelpLine(context, "/sbh status", "Show what is running and the saved points");
-        sendHelpLine(context, "/sbh sessions", "Show the last 10 Auto Farm sessions");
         sendHelpLine(context, "/sbh toggle <farm|fish>", "Turn Auto Farm or Auto Fish on or off");
         sendHelpLine(context, "/sbh hud", "Move the HUD boxes");
         sendHelpLine(context, "/sbh farm list", "List the turning points (click one to remove it)");
@@ -88,23 +86,6 @@ public class CommandManager {
         sendHelpLine(context, "/sbh farm undo", "Remove the last turning point");
         sendHelpLine(context, "/sbh farm clear", "Delete all points (asks to confirm first)");
         sendHelpLine(context, "/sbh reload", "Reload the config files");
-        return 1;
-    }
-
-    private static int sessions(CommandContext<FabricClientCommandSource> context) {
-        var sessions = FarmSessionHistory.getRecords();
-        sendMessage(context, PREFIX + "§fAuto Farm sessions (last " + sessions.size() + "/10):");
-        if (sessions.isEmpty()) {
-            sendMessage(context, "§7No completed sessions yet.");
-            return 0;
-        }
-        for (int i = sessions.size() - 1; i >= 0; i--) {
-            var session = sessions.get(i);
-            long seconds = session.runTimeMs / 1000L;
-            String duration = String.format(Locale.ROOT, "%dh %02dm", seconds / 3600, seconds / 60 % 60);
-            String coins = String.format(Locale.ROOT, "%,.0f", session.coins);
-            sendMessage(context, "§e" + session.startedAt + " §7| " + duration + " | §6" + coins + " coins §7| " + session.stopReason);
-        }
         return 1;
     }
 
