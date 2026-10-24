@@ -384,6 +384,11 @@ public class ModConfig extends Config {
         public int settleMaxSeconds = 15;
 
         @Expose
+        @ConfigOption(name = "Garden Scoreboard Check", desc = "Verify the Garden scoreboard after /warp garden before resuming Auto Farm.")
+        @ConfigEditorBoolean
+        public boolean gardenScoreboardCheck = true;
+
+        @Expose
         @ConfigOption(name = "Garden Check Timeout (s)", desc = "How long to wait for the Garden scoreboard after /warp garden. A timeout counts as a failed attempt.")
         @ConfigEditorSlider(minValue = 15f, maxValue = 120f, minStep = 5f)
         public int gardenCheckTimeoutSeconds = 45;
