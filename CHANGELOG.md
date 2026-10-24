@@ -1,18 +1,22 @@
 # Changelog
 
-## 1.8.1
+## 1.8.0
+
+### Features
+- Add Pest Farming settings with named pest and farm loadout selection through `/loadouts`
+- Track pest cooldown locally with configurable timing, initial Pests widget sync and an optional Finnegan cooldown
+- Switch to the pest loadout before cooldown expiry and return to the farm loadout after the actual spawn message
+- Pause Auto Farm before each loadout change, then send `/sethome` and keep Auto Farm stopped after the farm loadout is selected
+- Send `/sethome` when Auto Farm is manually stopped while Pest Farming is enabled
+- Add random 100-150 ms delays before menu commands and clicks, plus colored status messages
+- Add optional Garden scoreboard verification after reconnect, with a configurable timeout
+- Count a failed Garden verification as a reconnect attempt, then disconnect and retry
 
 ### Fixes
 - Exclude SkyBlock armor stand indicators from Auto Fish entity hook recovery to prevent premature reeling
 
-## 1.8.0
-
-### Features
-- Add Auto Farm session history with the last 10 sessions, duration, earnings, item counts, coins/hour and stop reason
-- Add `/sbh sessions` to view completed Auto Farm sessions
-- Verify the Garden scoreboard after reconnect commands before resuming Auto Farm
-- Count a failed Garden verification as a reconnect attempt, then disconnect and retry
-- Add a configurable Garden verification timeout
+### Removed
+- Remove Auto Farm session history and `/sbh sessions`
 
 ## 1.7.1
 
