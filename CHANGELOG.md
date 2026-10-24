@@ -13,6 +13,7 @@
 - Count a failed Garden verification as a reconnect attempt, then disconnect and retry
 
 ### Fixes
+- Close loadout containers through Minecraft's normal close flow and wait for both the screen and container state to close before resuming Auto Farm
 - Exclude SkyBlock armor stand indicators from Auto Fish entity hook recovery to prevent premature reeling
 
 ### Removed
