@@ -13,6 +13,7 @@ public abstract class Feature {
     private long runAccumulatedMs = 0L;
     private long runStartedAt = 0L;
     private boolean keepRunTime = false;
+    private long runGeneration = 0L;
 
     public Feature(String name) {
         this.name = name;
@@ -35,7 +36,7 @@ public abstract class Feature {
 
     /**
      * Turns the feature back on without resetting its run time. Only for restarts the mod
-     * does itself (reconnect); every other start begins counting from zero.
+     * does itself (reconnect or loadout changes); every other start begins counting from zero.
      */
     public void resume(Minecraft client) {
         keepRunTime = true;
@@ -53,6 +54,10 @@ public abstract class Feature {
         return runAccumulatedMs + (enabled ? System.currentTimeMillis() - runStartedAt : 0L);
     }
 
+    public long getRunGeneration() {
+        return runGeneration;
+    }
+
     public void resetRunTime() {
         runAccumulatedMs = 0L;
         if (enabled) runStartedAt = System.currentTimeMillis();
@@ -62,7 +67,10 @@ public abstract class Feature {
         long now = System.currentTimeMillis();
 
         if (state && !enabled) {
-            if (!keepRunTime) runAccumulatedMs = 0L;
+            if (!keepRunTime) {
+                runAccumulatedMs = 0L;
+                runGeneration++;
+            }
             runStartedAt = now;
         } else if (!state && enabled) {
             runAccumulatedMs += now - runStartedAt;

@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 /** Tracks pest cooldown locally and switches loadouts around actual pest spawns. */
 public class PestFarmingFeature extends Feature {
     private static final Pattern TAB_COOLDOWN = Pattern.compile("^Cooldown: (?:(\\d+)m\\s*)?(?:(\\d+)s)?$", Pattern.CASE_INSENSITIVE);
-    private enum Phase { IDLE, WAIT_PEST_COMMAND, OPEN_PEST_MENU, WAIT_PEST_MENU_CLOSE, WAIT_SPAWN, WAIT_FARM_COMMAND, OPEN_FARM_MENU, WAIT_FARM_MENU_CLOSE }
+    private enum Phase { IDLE, WAIT_PEST_COMMAND, OPEN_PEST_MENU, WAIT_PEST_MENU_CLOSE, WAIT_SPAWN, WAIT_FARM_COMMAND, OPEN_FARM_MENU, WAIT_FARM_MENU_CLOSE, WAIT_ABORT_MENU_CLOSE }
 
     private Phase phase = Phase.IDLE;
     private long clickAt;
@@ -27,6 +27,7 @@ public class PestFarmingFeature extends Feature {
     private long menuDeadline;
     private int loadoutContainerId = -1;
     private boolean farmWasRunning;
+    private boolean resumeAfterAbort;
     private boolean spawnPending;
     private boolean menuReady;
     private ClientLevel trackedLevel;
@@ -79,6 +80,7 @@ public class PestFarmingFeature extends Feature {
         waitingForInitialSync = false;
         spawnPending = false;
         farmWasRunning = false;
+        resumeAfterAbort = false;
         loadoutContainerId = -1;
     }
 
@@ -158,12 +160,11 @@ public class PestFarmingFeature extends Feature {
     }
 
     private void openLoadout(Minecraft client, Phase nextPhase) {
+        phase = nextPhase == Phase.OPEN_PEST_MENU ? Phase.WAIT_PEST_COMMAND : Phase.WAIT_FARM_COMMAND;
         if (client.player == null || client.getConnection() == null) {
-            phase = Phase.IDLE;
-            if (farmWasRunning && nextPhase == Phase.OPEN_PEST_MENU) ModuleManager.getFarmFeature().setState(client, true);
+            abortLoadout(client, "Connection lost before opening /loadouts.");
             return;
         }
-        phase = nextPhase == Phase.OPEN_PEST_MENU ? Phase.WAIT_PEST_COMMAND : Phase.WAIT_FARM_COMMAND;
         commandAt = System.currentTimeMillis() + actionDelay();
     }
 
@@ -197,19 +198,16 @@ public class PestFarmingFeature extends Feature {
             if (System.currentTimeMillis() >= commandAt) sendLoadoutCommand(client);
             return;
         }
-        if (phase == Phase.WAIT_PEST_MENU_CLOSE || phase == Phase.WAIT_FARM_MENU_CLOSE) {
-            if (client.gui.screen() != null) {
-                if (!(client.gui.screen() instanceof AbstractContainerScreen<?> screen)
-                        || screen.getMenu().containerId != loadoutContainerId) return;
-                if (System.currentTimeMillis() < menuDeadline) return;
-                screen.onClose();
-            }
-            if (client.player.containerMenu != client.player.inventoryMenu) {
-                if (client.gui.screen() != null || client.player.containerMenu.containerId != loadoutContainerId) return;
-                client.player.closeContainer();
-            }
-            if (client.gui.screen() != null || client.player.containerMenu != client.player.inventoryMenu) return;
+        if (phase == Phase.WAIT_PEST_MENU_CLOSE || phase == Phase.WAIT_FARM_MENU_CLOSE || phase == Phase.WAIT_ABORT_MENU_CLOSE) {
+            if (!closeLoadoutMenu(client)) return;
             loadoutContainerId = -1;
+            if (phase == Phase.WAIT_ABORT_MENU_CLOSE) {
+                phase = Phase.IDLE;
+                boolean resumeFarm = resumeAfterAbort;
+                resumeAfterAbort = false;
+                if (resumeFarm) ModuleManager.getFarmFeature().resume(client);
+                return;
+            }
             if (phase == Phase.WAIT_FARM_MENU_CLOSE) {
                 phase = Phase.IDLE;
                 farmWasRunning = false;
@@ -225,7 +223,7 @@ public class PestFarmingFeature extends Feature {
                 spawnPending = false;
                 startFarmLoadout(client);
             } else if (farmWasRunning) {
-                ModuleManager.getFarmFeature().setState(client, true);
+                ModuleManager.getFarmFeature().resume(client);
             }
             return;
         }
@@ -237,6 +235,7 @@ public class PestFarmingFeature extends Feature {
                 || !screen.getTitle().getString().toLowerCase(Locale.ROOT).contains("loadout")) {
             return;
         }
+        loadoutContainerId = screen.getMenu().containerId;
         String expectedName = normalizeLoadoutName(selectedLoadoutName());
         if (expectedName.isEmpty()) {
             abortLoadout(client, "The loadout name is empty. Enter it in the Pest Farming settings.");
@@ -272,6 +271,24 @@ public class PestFarmingFeature extends Feature {
         feedback(client, "Selected " + (pestLoadout ? "pest" : "farm") + " loadout: " + chosenName + ".");
     }
 
+    private boolean closeLoadoutMenu(Minecraft client) {
+        if (client.gui.screen() != null) {
+            if (!(client.gui.screen() instanceof AbstractContainerScreen<?> screen)) return false;
+            if (loadoutContainerId == -1 && phase == Phase.WAIT_ABORT_MENU_CLOSE
+                    && screen.getTitle().getString().toLowerCase(Locale.ROOT).contains("loadout")) {
+                loadoutContainerId = screen.getMenu().containerId;
+            }
+            if (screen.getMenu().containerId != loadoutContainerId) return false;
+            if (System.currentTimeMillis() < menuDeadline) return false;
+            screen.onClose();
+        }
+        if (client.player.containerMenu != client.player.inventoryMenu) {
+            if (client.gui.screen() != null || client.player.containerMenu.containerId != loadoutContainerId) return false;
+            client.player.closeContainer();
+        }
+        return client.gui.screen() == null && client.player.containerMenu == client.player.inventoryMenu;
+    }
+
     private String selectedLoadoutName() {
         var settings = ConfigManager.config.farming.pestFarming;
         return phase == Phase.OPEN_PEST_MENU ? settings.pestLoadoutName : settings.farmLoadoutName;
@@ -298,10 +315,11 @@ public class PestFarmingFeature extends Feature {
     private void abortLoadout(Minecraft client, String reason) {
         SkyBatuhan.LOGGER.warn("[PestFarming] {}", reason);
         feedback(client, reason, ChatFormatting.RED);
-        boolean resumeFarm = farmWasRunning && phase != Phase.WAIT_FARM_COMMAND
+        resumeAfterAbort = farmWasRunning && phase != Phase.WAIT_FARM_COMMAND
                 && phase != Phase.OPEN_FARM_MENU && phase != Phase.WAIT_FARM_MENU_CLOSE;
-        phase = Phase.IDLE;
-        if (resumeFarm) ModuleManager.getFarmFeature().setState(client, true);
+        spawnPending = false;
+        phase = Phase.WAIT_ABORT_MENU_CLOSE;
+        menuDeadline = System.currentTimeMillis();
     }
 
     @Override
@@ -315,12 +333,12 @@ public class PestFarmingFeature extends Feature {
     }
 
     public static void onManualAutoFarmStop(Minecraft client) {
-        if (!ModuleManager.getPestFarmingFeature().isEnabled() || client.player == null || client.getConnection() == null) return;
+        if (!ModuleManager.getPestFarmingFeature().isEnabled()) return;
         PestFarmingFeature feature = ModuleManager.getPestFarmingFeature();
         feature.phase = Phase.IDLE;
         feature.spawnPending = false;
         feature.farmWasRunning = false;
-        client.getConnection().sendCommand("sethome");
-        SkyBatuhan.LOGGER.info("[PestFarming] Sent /sethome after manually stopping Auto Farm");
+        feature.resumeAfterAbort = false;
+        SkyBatuhan.LOGGER.info("[PestFarming] Cancelled pending loadout changes after manually stopping Auto Farm");
     }
 }

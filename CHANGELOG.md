@@ -7,12 +7,15 @@
 - Track pest cooldown locally with configurable timing, initial Pests widget sync and an optional Finnegan cooldown
 - Switch to the pest loadout before cooldown expiry and return to the farm loadout after the actual spawn message
 - Pause Auto Farm before each loadout change, then send `/sethome` and keep Auto Farm stopped after the farm loadout is selected
-- Send `/sethome` when Auto Farm is manually stopped while Pest Farming is enabled
+- Cancel pending loadout changes when Auto Farm is manually stopped, without sending `/sethome`
 - Add random 100-150 ms delays before menu commands and clicks, plus colored status messages
 - Add optional Garden scoreboard verification after reconnect, with a configurable timeout
 - Count a failed Garden verification as a reconnect attempt, then disconnect and retry
 
 ### Fixes
+- Wait for menu and container cleanup before resuming from a failed loadout selection
+- Preserve Auto Farm runtime, stop timer and profit totals across temporary loadout pauses
+- Apply manual-stop behavior consistently to keybinds, settings and `/sbh toggle farm`
 - Close loadout containers through Minecraft's normal close flow and wait for both the screen and container state to close before resuming Auto Farm
 - Exclude SkyBlock armor stand indicators from Auto Fish entity hook recovery to prevent premature reeling
 

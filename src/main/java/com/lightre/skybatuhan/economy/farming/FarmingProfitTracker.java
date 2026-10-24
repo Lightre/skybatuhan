@@ -42,11 +42,6 @@ public final class FarmingProfitTracker {
      * A sack batch covers up to 30s, so wait a little longer than that after stopping.
      */
     public static final long GRACE_MS = 35_000L;
-    /**
-     * A start with less run time than this is a new session (a reconnect resume keeps its run time).
-     */
-    private static final long FRESH_START_MS = 5_000L;
-
     private static final long MIN_TIME_MS = 30_000L;
     private static final int DEBUG_LOGS = 3;
     private static final int INVENTORY_SCAN_TICKS = 10;
@@ -76,7 +71,7 @@ public final class FarmingProfitTracker {
     private static int scanTicks = 0;
 
     private static long lastActiveAt = 0L;
-    private static boolean wasEnabled = false;
+    private static long lastRunGeneration = -1L;
     private static long lastCreditRunMs = 0L;
     private static int debugLogged = 0;
     private static int skippedLogged = 0;
@@ -105,10 +100,11 @@ public final class FarmingProfitTracker {
         AutoFarmFeature farm = ModuleManager.getFarmFeature();
         boolean enabled = farm.isEnabled();
 
-        // Only a new start wipes the numbers. A stop must not: the last sack batch still arrives after it
-        // and the total is worth reading (a stop also resets the run time, so that cannot be the signal)
-        if (enabled && !wasEnabled && farm.getRunTimeMs() < FRESH_START_MS) reset();
-        wasEnabled = enabled;
+        // Resuming a temporary pause keeps the same run, even within the first few seconds.
+        if (enabled && farm.getRunGeneration() != lastRunGeneration) {
+            reset();
+            lastRunGeneration = farm.getRunGeneration();
+        }
 
         if (enabled) {
             lastActiveAt = System.currentTimeMillis();
