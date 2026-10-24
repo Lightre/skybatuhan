@@ -454,7 +454,11 @@ public class SessionMonitor {
 
                 String command = commands.poll();
                 if (command == null) {
-                    schedule(State.VERIFY_GARDEN, Math.max(15, cfg.gardenCheckTimeoutSeconds) * 1000L);
+                    if (cfg.gardenScoreboardCheck) {
+                        schedule(State.VERIFY_GARDEN, Math.max(15, cfg.gardenCheckTimeoutSeconds) * 1000L);
+                    } else {
+                        finishRecovery(client, cfg);
+                    }
                     return;
                 }
                 sendCommand(client, command);
