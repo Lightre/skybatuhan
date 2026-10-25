@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.1
+
+### Fixes
+- Click the loadout menu's Close item after selecting a loadout
+- Allow Auto Farm to continue breaking blocks after a background loadout change when the screen and container are closed
+- Remember the Pest Farming enabled setting across game restarts
+
 ## 1.8.0
 
 ### Features

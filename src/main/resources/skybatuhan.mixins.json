@@ -3,6 +3,7 @@
   "package": "com.lightre.skybatuhan.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "AutoFarmInputMixin",
     "FishingHookMixin",
     "MouseHandlerMixin",
     "PestChatMixin"

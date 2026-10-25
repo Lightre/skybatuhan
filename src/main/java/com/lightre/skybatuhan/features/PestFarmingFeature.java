@@ -266,7 +266,7 @@ public class PestFarmingFeature extends Feature {
         client.gameMode.handleContainerInput(screen.getMenu().containerId, target.index, 0, ContainerInput.PICKUP, client.player);
         boolean pestLoadout = phase == Phase.OPEN_PEST_MENU;
         phase = pestLoadout ? Phase.WAIT_PEST_MENU_CLOSE : Phase.WAIT_FARM_MENU_CLOSE;
-        menuDeadline = System.currentTimeMillis() + 2500L;
+        menuDeadline = System.currentTimeMillis() + actionDelay();
         SkyBatuhan.LOGGER.info("[PestFarming] Clicked loadout '{}' in slot {}", chosenName, target.index);
         feedback(client, "Selected " + (pestLoadout ? "pest" : "farm") + " loadout: " + chosenName + ".");
     }
@@ -278,8 +278,19 @@ public class PestFarmingFeature extends Feature {
                     && screen.getTitle().getString().toLowerCase(Locale.ROOT).contains("loadout")) {
                 loadoutContainerId = screen.getMenu().containerId;
             }
-            if (screen.getMenu().containerId != loadoutContainerId) return false;
+            if (screen.getMenu().containerId != loadoutContainerId) {
+                if (!screen.getTitle().getString().toLowerCase(Locale.ROOT).contains("loadout")) return false;
+                loadoutContainerId = screen.getMenu().containerId;
+            }
             if (System.currentTimeMillis() < menuDeadline) return false;
+            for (Slot candidate : screen.getMenu().slots) {
+                if (candidate.container == client.player.getInventory() || candidate.getItem().isEmpty()) continue;
+                if (!normalizeLoadoutName(candidate.getItem().getHoverName().getString()).equals("close")) continue;
+                client.gameMode.handleContainerInput(screen.getMenu().containerId, candidate.index, 0, ContainerInput.PICKUP, client.player);
+                menuDeadline = System.currentTimeMillis() + 2500L;
+                SkyBatuhan.LOGGER.info("[PestFarming] Clicked Close in slot {}", candidate.index);
+                return false;
+            }
             screen.onClose();
         }
         if (client.player.containerMenu != client.player.inventoryMenu) {
