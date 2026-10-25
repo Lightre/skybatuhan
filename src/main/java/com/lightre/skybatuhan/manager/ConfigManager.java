@@ -112,9 +112,8 @@ public class ConfigManager {
             config.guard.teleportDistance = Math.max(0, config.guard.teleportDistance);
 
             if (!firstLoadDone) {
-                // Features must never start by themselves when the game launches
+                // Active farming and fishing must not start when the game launches.
                 config.farming.autoFarmEnabled = false;
-                config.farming.pestFarming.enabled = false;
                 config.fishing.autoFishEnabled = false;
                 firstLoadDone = true;
             } else {
